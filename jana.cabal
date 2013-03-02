@@ -15,7 +15,8 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 executable jana
-  main-is:             Main.hs
-  -- other-modules:
-  hs-source-dirs:      src
-  build-depends:       base ==4.5.*
+  main-is:           Main.hs
+  other-modules:     Jana.Ast, Jana.Parser, Jana.Interpreter
+  hs-source-dirs:    src
+  build-depends:     base == 4.5.*,
+                     parsec == 3.1.3
