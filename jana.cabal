@@ -6,7 +6,7 @@ version:             0.1
 -- synopsis:
 -- description:
 license:             MIT
-license-file:        LICENSE
+-- license-file:        LICENSE
 author:              Michael Budde, Claus Skou Nielsen
 maintainer:          mbudde@gmail.com
 -- copyright:
