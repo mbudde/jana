@@ -50,11 +50,11 @@ data Statement = Assign   ModOp Lval Expr
                | Skip
                deriving (Eq, Show, Read)
 
-data Expr = Const Int
-          | LV    Lval
-          | BinOp Op Expr Expr
-          | Empty Ident
-          | Top   Ident
+data Expr = NumConst Int
+          | LV       Lval
+          | BinOp    Op Expr Expr
+          | Empty    Ident
+          | Top      Ident
           | Nil
           deriving (Eq, Show, Read)
 
