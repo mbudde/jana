@@ -2,65 +2,64 @@
 module Jana.Ast where
 
 -- Data types
-data Type = Int
-          | Stack
-          deriving (Eq, Show, Read)
+data Type
+    = Int
+    | Stack
+    deriving (Eq, Show)
 
 -- Identifier
 type Ident = String
 
 -- Left-value
-data Lval = Scalar Ident
-          | Array  Ident Int
-          deriving (Eq, Show, Read)
+data Lval
+    = Scalar Ident
+    | Array  Ident Int
+    deriving (Eq, Show)
 
 -- Modification operators used in assignment
-data ModOp = PlusEq
-           | MinusEq
-           | XorEq
-           deriving (Eq, Show, Read)
+data ModOp
+    = AddEq -- +=
+    | SubEq -- -=
+    | XorEq -- ^=
+    deriving (Eq, Show)
 
--- Operator
-data Op = Plus          -- Arithmetic
-        | Minus
-        | Times
-        | Divide
-        | Modulo
-        | And           -- Binary
-        | Or
-        | Xor
-        | LAnd          -- Logical
-        | LOr
-        | GreaterThan   -- Relational
-        | LessThan
-        | Equal
-        | GreaterEqual
-        | LessEqual
-        deriving (Eq, Show, Read)
+-- Binary operators
+data BinOp
+    = Add | Sub | Mul | Div | Mod     -- Arithmetic (+ - * / %)
+    | And | Or | Xor                  -- Binary (& | ^)
+    | LAnd | LOr                      -- Logical (&& ||)
+    | Gt | Lt | Eq | GE | LE          -- Relational (> < = >= <=)
+    deriving (Eq, Show)
 
-data Statement = Assign   ModOp Lval Expr
-               | IfElse   Expr [Statement] [Statement] Expr
-               | FromLoop Expr [Statement] [Statement] Expr
-               | Push     Ident Ident
-               | Pop      Ident Ident
-               | Local    (Type, Ident, Expr) [Statement] (Type, Ident, Expr)
-               | Call     Ident [Ident]
-               | Uncall   Ident [Ident]
-               | Swap     Ident Ident
-               | Skip
-               deriving (Eq, Show, Read)
+-- Statement
+data Stat
+    = Assign   ModOp Lval Expr
+    | If       Expr [Stat] [Stat] Expr
+    | From     Expr [Stat] [Stat] Expr
+    | Push     Ident Ident
+    | Pop      Ident Ident
+    | Local    (Type, Ident, Expr) [Stat] (Type, Ident, Expr)
+    | Call     Ident [Ident]
+    | Uncall   Ident [Ident]
+    | Swap     Ident Ident
+    | Skip
+    deriving (Eq, Show)
 
-data Expr = NumConst Int
-          | LV       Lval
-          | BinOp    Op Expr Expr
-          | Empty    Ident
-          | Top      Ident
-          | Nil
-          deriving (Eq, Show, Read)
+-- Expression
+data Expr
+    = Number   Int
+    | LV       Lval
+    | BinOp    BinOp Expr Expr
+    | Empty    Ident
+    | Top      Ident
+    | Nil
+    deriving (Eq, Show)
 
-data Proc = Proc { procname  :: Ident
-                 , params    :: [(Type, Ident)]   -- Zero or more
-                 , body      :: [Statement] }
-          deriving (Eq, Show, Read)
+-- Procedure
+data Proc
+    = Proc { procname  :: Ident
+           , params    :: [(Type, Ident)]   -- Zero or more
+           , body      :: [Stat] }
+    deriving (Eq, Show)
 
 type Program = [Proc]
