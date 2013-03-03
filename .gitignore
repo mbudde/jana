@@ -1,1 +1,4 @@
 /dist
+src/Main
+*.hi
+*.o
