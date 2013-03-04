@@ -12,8 +12,8 @@ type Ident = String
 
 -- Left-value
 data Lval
-    = Scalar Ident
-    | Array  Ident Int
+    = Var    Ident
+    | Lookup Ident Expr
     deriving (Eq, Show)
 
 -- Modification operators used in assignment
@@ -55,11 +55,22 @@ data Expr
     | Nil
     deriving (Eq, Show)
 
--- Procedure
+-- Declaration
+data Vdecl
+    = Scalar Type Ident
+    | Array  Ident Int
+    deriving (Eq, Show)
+
+-- Main procedure
+data ProcMain
+    = ProcMain [Vdecl] [Stat]
+    deriving (Eq, Show)
+
+-- Procedure definition
 data Proc
     = Proc { procname  :: Ident
            , params    :: [(Type, Ident)]   -- Zero or more
            , body      :: [Stat] }
     deriving (Eq, Show)
 
-type Program = [Proc]
+type Program = (ProcMain, [Proc])
