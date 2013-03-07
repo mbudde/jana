@@ -28,7 +28,7 @@ data BinOp
     = Add | Sub | Mul | Div | Mod     -- Arithmetic (+ - * / %)
     | And | Or | Xor                  -- Binary (& | ^)
     | LAnd | LOr                      -- Logical (&& ||)
-    | GT | LT | Eq | NEq | GE | LE    -- Relational (> < = != >= <=)
+    | GT | LT | EQ | NEQ | GE | LE    -- Relational (> < = != >= <=)
     deriving (Eq, Show)
 
 -- Statement
