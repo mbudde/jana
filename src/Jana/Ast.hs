@@ -28,17 +28,17 @@ data BinOp
     = Add | Sub | Mul | Div | Mod     -- Arithmetic (+ - * / %)
     | And | Or | Xor                  -- Binary (& | ^)
     | LAnd | LOr                      -- Logical (&& ||)
-    | GT | LT | Eq | NEq | GE | LE    -- Relational (> < = != >= <=)
+    | GT | LT | EQ | NEQ | GE | LE    -- Relational (> < = != >= <=)
     deriving (Eq, Show)
 
 -- Statement
-data Stat
+data Stmt
     = Assign   ModOp Lval Expr
-    | If       Expr [Stat] [Stat] Expr
-    | From     Expr [Stat] [Stat] Expr
+    | If       Expr [Stmt] [Stmt] Expr
+    | From     Expr [Stmt] [Stmt] Expr
     | Push     Ident Ident
     | Pop      Ident Ident
-    | Local    (Type, Ident, Expr) [Stat] (Type, Ident, Expr)
+    | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr)
     | Call     Ident [Ident]
     | Uncall   Ident [Ident]
     | Swap     Ident Ident
@@ -63,14 +63,14 @@ data Vdecl
 
 -- Main procedure
 data ProcMain
-    = ProcMain [Vdecl] [Stat]
+    = ProcMain [Vdecl] [Stmt]
     deriving (Eq, Show)
 
 -- Procedure definition
 data Proc
     = Proc { procname  :: Ident
            , params    :: [(Type, Ident)]   -- Zero or more
-           , body      :: [Stat] }
+           , body      :: [Stmt] }
     deriving (Eq, Show)
 
 type Program = (ProcMain, [Proc])
