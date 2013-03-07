@@ -1,0 +1,19 @@
+
+procedure fib(int x1, int x2, int n)
+    if n=0 then
+        x1 += 1
+        x2 += 1
+    else
+        n -= 1
+        call fib(x1, x2, n)
+        x1 += x2
+        x1 <=> x2
+    fi x1 = x2
+
+procedure main()
+    int x1
+    int x2
+    int n
+    n += 4
+    call fib(x1, x2, n)
+
