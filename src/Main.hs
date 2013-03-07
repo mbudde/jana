@@ -1,5 +1,6 @@
 
 import Jana.Ast
+import Jana.Parser
 
 fib :: Program
 fib = ( ProcMain [] []

@@ -47,7 +47,7 @@ data Stmt
 
 -- Expression
 data Expr
-    = Number   Int
+    = Number   Integer
     | LV       Lval
     | BinOp    BinOp Expr Expr
     | Empty    Ident
