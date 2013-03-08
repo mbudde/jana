@@ -25,7 +25,7 @@ instance Show Value where
 
 type Store = Map.Map Ident Value
 
-bindIdent :: Store -> Ident -> Value -> Store
+bindIdent :: Ident -> Value -> Store -> Store
 bindIdent store id val
     = if Map.notMember id store
         then Map.insert id val store
@@ -39,7 +39,7 @@ lookupIdent store id
 
 type ProcEnv = Map.Map Ident Proc
 
-bindProc :: ProcEnv -> Ident -> Proc -> ProcEnv
+bindProc :: Ident -> Proc -> ProcEnv -> ProcEnv
 bindProc env name proc
     = if Map.notMember name env
         then Map.insert name proc env
