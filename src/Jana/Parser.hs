@@ -68,9 +68,9 @@ identifier = T.identifier lexer -- parses an identifier
 reserved   = T.reserved   lexer -- parses a reserved name
 reservedOp = T.reservedOp lexer -- parses an operator
 parens     = T.parens     lexer -- parses surrounding parenthesis:
-                                    --   parens p
-                                    -- takes care of the parenthesis and
-                                    -- uses p to parse what's inside them
+                                -- parens p
+                                -- takes care of the parenthesis and
+                                -- uses p to parse what's inside them
 brackets   = T.brackets   lexer -- parses brackets
 integer    = T.integer    lexer -- parses an integer
 semi       = T.semi       lexer -- parses a semicolon
@@ -112,12 +112,15 @@ swapStmt   = undefined
 skipStmt   = undefined
 
 expression :: Parser Expr
-expression = numberExpr
-         <|> lvalExpr
-         {- <|> binOpExpr -}
-         {- <|> emptyExpr -}
-         {- <|> topExpr -}
-         {- <|> nilExpr -}
+expression =  buildExpressionParser binOperators term
+
+term :: Parser Expr
+term =   parens expression
+     <|> numberExpr
+     <|> lvalExpr
+     <|> emptyExpr
+     <|> topExpr
+     <|> return Nil
 
 numberExpr :: Parser Expr
 numberExpr = liftM Number integer
@@ -134,6 +137,33 @@ lookUp =
   do ident <- identifier
      expr  <- brackets expression
      return $ Lookup ident expr
+
+emptyExpr :: Parser Expr
+emptyExpr = reserved "empty" >>
+            parens identifier >>= return . Jana.Ast.Empty
+
+topExpr :: Parser Expr
+topExpr =  reserved "top" >>
+           parens identifier >>= return . Jana.Ast.Top
+
+binOperators = [ [Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft]
+               , [Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft]
+               , [Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft]
+               , [Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft]
+               , [Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft]
+               , [Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft]
+               , [Infix (reservedOp "|"   >> return (BinOp Or  )) AssocLeft]
+               , [Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft]
+               , [Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft]
+               , [Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft]
+               , [Infix (reservedOp ">"   >> return (BinOp Jana.Ast.GT)) AssocLeft]
+               , [Infix (reservedOp "<"   >> return (BinOp Jana.Ast.LT)) AssocLeft]
+               , [Infix (reservedOp "="   >> return (BinOp Jana.Ast.EQ)) AssocLeft]
+               , [Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft]
+               , [Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft]
+               , [Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft]
+               ]
+
 
 parseString :: String -> Expr
 parseString str =
