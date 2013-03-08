@@ -100,9 +100,11 @@ evalLval (Lookup id e) = do
 
 evalExpr :: Expr -> EvalComp Value
 evalExpr (Number x) = return $ VInt x
-evalExpr (LV lval) = evalLval lval
+evalExpr Nil        = return VNil
+evalExpr (LV lval)  = evalLval lval
 evalExpr (BinOp op e1 e2) = do
     VInt val1 <- evalExpr e1  -- FIXME: error when non-int
     VInt val2 <- evalExpr e2
     return $ VInt $ performOperation op val1 val2
-evalExpr Nil = return VNil
+evalExpr (Top _)    = undefined
+evalExpr (Empty _)  = undefined
