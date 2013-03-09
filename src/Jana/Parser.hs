@@ -4,7 +4,7 @@ import System.IO
 import Control.Monad
 import Control.Applicative((<*))
 import Jana.Ast
-import Text.Parsec
+import Text.Parsec hiding (Empty)
 import Text.Parsec.String
 import Text.Parsec.Expr
 import qualified Text.Parsec.Combinator as Combinator
@@ -133,18 +133,13 @@ lval =   try lookUp
      <|> liftM Var identifier
 
 lookUp :: Parser Lval
-lookUp =
-  do ident <- identifier
-     expr  <- brackets expression
-     return $ Lookup ident expr
+lookUp = liftM2 Lookup identifier (brackets expression)
 
 emptyExpr :: Parser Expr
-emptyExpr = reserved "empty" >>
-            parens identifier >>= return . Jana.Ast.Empty
+emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
 
 topExpr :: Parser Expr
-topExpr =  reserved "top" >>
-           parens identifier >>= return . Jana.Ast.Top
+topExpr =  reserved "top" >> liftM Top (parens identifier)
 
 binOperators = [ [Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft]
                , [Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft]
