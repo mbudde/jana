@@ -1,5 +1,6 @@
 module Jana.Parser where
 
+import Prelude hiding (GT, LT, EQ)
 import System.IO
 import Control.Monad
 import Control.Applicative((<*))
@@ -141,22 +142,22 @@ emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
 topExpr :: Parser Expr
 topExpr =  reserved "top" >> liftM Top (parens identifier)
 
-binOperators = [ [Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft]
-               , [Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft]
-               , [Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft]
-               , [Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft]
-               , [Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft]
-               , [Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft]
-               , [Infix (reservedOp "|"   >> return (BinOp Or  )) AssocLeft]
-               , [Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft]
-               , [Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft]
-               , [Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft]
-               , [Infix (reservedOp ">"   >> return (BinOp Jana.Ast.GT)) AssocLeft]
-               , [Infix (reservedOp "<"   >> return (BinOp Jana.Ast.LT)) AssocLeft]
-               , [Infix (reservedOp "="   >> return (BinOp Jana.Ast.EQ)) AssocLeft]
-               , [Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft]
-               , [Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft]
-               , [Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft]
+binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
+                 , Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft
+                 , Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft ]
+               , [ Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft
+                 , Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft ]
+               , [ Infix (reservedOp "<"   >> return (BinOp LT  )) AssocLeft
+                 , Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft
+                 , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
+                 , Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft
+                 , Infix (reservedOp "="   >> return (BinOp EQ  )) AssocLeft
+                 , Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft ]
+               , [ Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft
+                 , Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft
+                 , Infix (reservedOp "|"   >> return (BinOp Or  )) AssocLeft ]
+               , [ Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft
+                 , Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft ]
                ]
 
 
