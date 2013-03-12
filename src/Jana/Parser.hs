@@ -4,24 +4,26 @@ import Prelude hiding (GT, LT, EQ)
 import System.IO
 import Control.Monad
 import Control.Applicative((<*))
-import Jana.Ast
+
 import Text.Parsec hiding (Empty)
 import Text.Parsec.String
 import Text.Parsec.Expr
-import qualified Text.Parsec.Combinator as Combinator
-import qualified Text.Parsec.Token as T
 import Text.Parsec.Language
+import qualified Text.Parsec.Combinator as Combinator
+import qualified Text.Parsec.Token as Token
 
-janaDef = T.LanguageDef {
-                T.commentStart     = "(*"
-              , T.commentEnd       = "*)"
-              , T.commentLine      = "#"
-              , T.nestedComments   = False
-              , T.identStart       = letter
-              , T.identLetter      = alphaNum
-              , T.opStart          = oneOf "+-^*/%&|<>=!"
-              , T.opLetter         = oneOf "&|="
-              , T.reservedOpNames  = [ "+"
+import Jana.Ast
+
+janaDef = Token.LanguageDef {
+                Token.commentStart     = "(*"
+              , Token.commentEnd       = "*)"
+              , Token.commentLine      = "#"
+              , Token.nestedComments   = False
+              , Token.identStart       = letter
+              , Token.identLetter      = alphaNum
+              , Token.opStart          = oneOf "+-^*/%&|<>=!"
+              , Token.opLetter         = oneOf "&|="
+              , Token.reservedOpNames  = [ "+"
                                    , "-"
                                    , "^"
                                    , "*"
@@ -38,7 +40,7 @@ janaDef = T.LanguageDef {
                                    , "<="
                                    , ">="
                                    ]
-              , T.reservedNames    = [ "procedure"
+              , Token.reservedNames    = [ "procedure"
                                    , "int"
                                    , "stack"
                                    , "if"
@@ -60,23 +62,23 @@ janaDef = T.LanguageDef {
                                    , "top"
                                    , "nil"
                                    ]
-              , T.caseSensitive    = True
+              , Token.caseSensitive    = True
   }
 
-lexer = T.makeTokenParser janaDef
+lexer = Token.makeTokenParser janaDef
 
-identifier = T.identifier lexer -- parses an identifier
-reserved   = T.reserved   lexer -- parses a reserved name
-reservedOp = T.reservedOp lexer -- parses an operator
-parens     = T.parens     lexer -- parses surrounding parenthesis:
+identifier = Token.identifier lexer -- parses an identifier
+reserved   = Token.reserved   lexer -- parses a reserved name
+reservedOp = Token.reservedOp lexer -- parses an operator
+parens     = Token.parens     lexer -- parses surrounding parenthesis:
                                 -- parens p
                                 -- takes care of the parenthesis and
                                 -- uses p to parse what's inside them
-brackets   = T.brackets   lexer -- parses brackets
-integer    = T.integer    lexer -- parses an integer
-semi       = T.semi       lexer -- parses a semicolon
-comma      = T.comma      lexer -- parses a comma
-whiteSpace = T.whiteSpace lexer -- parses whitespace
+brackets   = Token.brackets   lexer -- parses brackets
+integer    = Token.integer    lexer -- parses an integer
+semi       = Token.semi       lexer -- parses a semicolon
+comma      = Token.comma      lexer -- parses a comma
+whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
 {- janaParser :: Parser Proc -}
 {- janaParser = whiteSpace >> procedure -}
