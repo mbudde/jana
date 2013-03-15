@@ -58,7 +58,7 @@ data Expr
 -- Declaration
 data Vdecl
     = Scalar Type Ident
-    | Array  Ident Int
+    | Array  Ident Integer
     deriving (Eq, Show)
 
 -- Main procedure

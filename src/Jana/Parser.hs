@@ -4,6 +4,7 @@ import Prelude hiding (GT, LT, EQ)
 import System.IO
 import Control.Monad
 import Control.Applicative((<*))
+import Data.Either
 import Data.Maybe
 
 import Text.Parsec hiding (Empty)
@@ -80,19 +81,51 @@ semi       = Token.semi       lexer -- parses a semicolon
 comma      = Token.comma      lexer -- parses a comma
 whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
-{- janaParser :: Parser Proc -}
-{- janaParser = whiteSpace >> procedure -}
+program :: Parser Program
+program =
+  do whiteSpace
+     ([main], procs) <- liftM partitionEithers (many genProcedure)
+     return $ (main, procs)
 
-{- procedure :: Parser Proc -}
-{- procedure =  -}
-  {- do reserved "procedure" -}
-     {- name   <- identifier -}
-     {- params <- sepBy parameter comma -- TODO: Write parameter function -}
-     {- stats  <- many statement        -- TODO: Write statement function -}
-     {- return $ Proc { procname = name, params = params, body = stats } -}
+genProcedure :: Parser (Either ProcMain Proc)
+genProcedure =  try (mainProcedure >>= return . Left)
+            <|> (procedure     >>= return . Right)
+
+mainProcedure :: Parser ProcMain
+mainProcedure =
+  do reserved "procedure"
+     reserved "main"
+     parens whiteSpace
+     vdecls <- many vdecl
+     stats  <- many statement
+     return $ ProcMain vdecls stats
+     
+vdecl :: Parser Vdecl
+vdecl =
+  do mytype <- atype
+     ident  <- identifier
+     if mytype == Int then
+       (brackets integer >>= return . (Array ident))
+       <|> (return $ Scalar mytype ident)
+      else
+        return $ Scalar mytype ident
+     
+procedure :: Parser Proc
+procedure = 
+  do reserved "procedure"
+     name   <- identifier
+     params <- parens $ sepBy parameter comma
+     stats  <- many statement
+     return $ Proc { procname = name, params = params, body = stats }
+
+parameter :: Parser (Type, Ident)
+parameter =
+  do mytype <- atype
+     ident  <- identifier
+     return (mytype, ident)
 
 statement :: Parser Stmt
-statement =   assignStmt
+statement =   try assignStmt
           <|> ifStmt
           <|> fromStmt
           <|> pushStmt
@@ -189,7 +222,11 @@ uncallStmt =
      return $ Uncall procname args
 
 swapStmt :: Parser Stmt
-swapStmt = reserved "swap" >> liftM2 Swap identifier identifier
+swapStmt =
+  do ident1 <- identifier
+     reservedOp "<=>"
+     ident2 <- identifier
+     return $ Swap ident1 ident2
 
 skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> return Skip
@@ -248,3 +285,10 @@ parseString str =
   case parse (many statement) "" str of
     Left e  -> error $ show e
     Right r -> r
+
+parseFile :: String -> IO Program
+parseFile file =
+  do str <- readFile file
+     case parse program "" str of
+       Left e  -> print e >> fail "parse error"
+       Right r -> return r
