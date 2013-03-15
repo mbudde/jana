@@ -22,9 +22,9 @@ janaDef = Token.LanguageDef {
               , Token.nestedComments   = False
               , Token.identStart       = letter
               , Token.identLetter      = alphaNum
-              , Token.opStart          = oneOf "" -- oneOf "+-^*/%&|<>=!"
-              , Token.opLetter         = oneOf "" -- oneOf "&|="
-              , Token.reservedOpNames  = [{- "+"
+              , Token.opStart          = oneOf "+-^*/%&|<>=!"
+              , Token.opLetter         = oneOf "&|="
+              , Token.reservedOpNames  = [ "+"
                                          , "-"
                                          , "^"
                                          , "*"
@@ -39,7 +39,7 @@ janaDef = Token.LanguageDef {
                                          , "="
                                          , "!="
                                          , "<="
-                                         , ">=" -}
+                                         , ">="
                                          ]
               , Token.reservedNames    = [ "procedure"
                                          , "int"
@@ -85,11 +85,11 @@ program :: Parser Program
 program =
   do whiteSpace
      ([main], procs) <- liftM partitionEithers (many genProcedure)
-     return $ (main, procs)
+     return (main, procs)
 
 genProcedure :: Parser (Either ProcMain Proc)
-genProcedure =  try (mainProcedure >>= return . Left)
-            <|> (procedure     >>= return . Right)
+genProcedure =  try (liftM Left mainProcedure)
+            <|> liftM Right procedure
 
 mainProcedure :: Parser ProcMain
 mainProcedure =
@@ -97,7 +97,7 @@ mainProcedure =
      reserved "main"
      parens whiteSpace
      vdecls <- many vdecl
-     stats  <- many statement
+     stats  <- many1 statement
      return $ ProcMain vdecls stats
      
 vdecl :: Parser Vdecl
@@ -105,8 +105,8 @@ vdecl =
   do mytype <- atype
      ident  <- identifier
      if mytype == Int then
-       (brackets integer >>= return . (Array ident))
-       <|> (return $ Scalar mytype ident)
+       liftM (Array ident) (brackets integer)
+       <|> return (Scalar mytype ident)
       else
         return $ Scalar mytype ident
      
@@ -115,8 +115,8 @@ procedure =
   do reserved "procedure"
      name   <- identifier
      params <- parens $ sepBy parameter comma
-     stats  <- many statement
-     return $ Proc { procname = name, params = params, body = stats }
+     stats  <- many1 statement
+     return Proc { procname = name, params = params, body = stats }
 
 parameter :: Parser (Type, Ident)
 parameter =
@@ -133,7 +133,7 @@ statement =   try assignStmt
           <|> localStmt
           <|> callStmt
           <|> uncallStmt
-          <|> swapStmt
+          <|> try swapStmt
           <|> skipStmt
           <?> "statement"
 
@@ -154,7 +154,7 @@ ifStmt =
   do reserved "if"
      entrycond  <- expression
      reserved "then"
-     stats1     <- many statement
+     stats1     <- many1 statement
      stats2     <- option [] $ reserved "else" >> many1 statement
      reserved "fi"
      exitcond   <- expression
@@ -173,20 +173,22 @@ fromStmt =
 pushStmt :: Parser Stmt
 pushStmt =
   do reserved "push"
-     (x,y) <- parens $ do x <- identifier
-                          comma
-                          y <- identifier
-                          return (x,y)
+     (x,y) <- parens twoArgs
      return $ Push x y
 
 popStmt :: Parser Stmt
 popStmt =
   do reserved "pop"
-     (x,y) <- parens $ do x <- identifier
-                          comma
-                          y <- identifier
-                          return (x,y)
+     (x,y) <- parens twoArgs
      return $ Pop x y
+
+twoArgs :: Parser (Ident, Ident)
+twoArgs =
+  do x <- identifier
+     comma
+     y <- identifier
+     return (x,y)
+
 
 localStmt :: Parser Stmt
 localStmt =
@@ -195,7 +197,7 @@ localStmt =
      ident1 <- identifier
      reservedOp "="
      expr1  <- expression
-     stats  <- many statement
+     stats  <- many1 statement
      reserved "delocal"
      type2  <- atype
      ident2 <- identifier
@@ -280,9 +282,9 @@ binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                ]
 
 
-parseString :: String -> [Stmt]
+parseString :: String -> Program
 parseString str =
-  case parse (many statement) "" str of
+  case parse (program) "" str of
     Left e  -> error $ show e
     Right r -> r
 
@@ -292,3 +294,7 @@ parseFile file =
      case parse program "" str of
        Left e  -> print e >> fail "parse error"
        Right r -> return r
+
+cmpParse file p2 =
+  do p <- parseFile file
+     print (if p == p2 then "Equal!" else "Not equal!")
