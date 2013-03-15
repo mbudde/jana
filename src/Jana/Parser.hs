@@ -72,9 +72,9 @@ identifier = Token.identifier lexer -- parses an identifier
 reserved   = Token.reserved   lexer -- parses a reserved name
 reservedOp = Token.reservedOp lexer -- parses an operator
 parens     = Token.parens     lexer -- parses surrounding parenthesis:
-                                -- parens p
-                                -- takes care of the parenthesis and
-                                -- uses p to parse what's inside them
+                                    -- parens p
+                                    -- takes care of the parenthesis and
+                                    -- uses p to parse what's inside them
 brackets   = Token.brackets   lexer -- parses brackets
 integer    = Token.integer    lexer -- parses an integer
 semi       = Token.semi       lexer -- parses a semicolon
@@ -88,8 +88,8 @@ program =
      return (main, procs)
 
 genProcedure :: Parser (Either ProcMain Proc)
-genProcedure =  try (liftM Left mainProcedure)
-            <|> liftM Right procedure
+genProcedure =   try (liftM Left mainProcedure)
+             <|> liftM Right procedure
 
 mainProcedure :: Parser ProcMain
 mainProcedure =
@@ -104,11 +104,10 @@ vdecl :: Parser Vdecl
 vdecl =
   do mytype <- atype
      ident  <- identifier
-     if mytype == Int then
-       liftM (Array ident) (brackets integer)
-       <|> return (Scalar mytype ident)
-      else
-        return $ Scalar mytype ident
+     if mytype == Int
+       then     liftM (Array ident) (brackets integer)
+            <|> return (Scalar mytype ident)
+       else return $ Scalar mytype ident
      
 procedure :: Parser Proc
 procedure = 
@@ -152,12 +151,12 @@ modOp =   (reservedOp "+=" >> return AddEq)
 ifStmt :: Parser Stmt
 ifStmt =
   do reserved "if"
-     entrycond  <- expression
+     entrycond <- expression
      reserved "then"
-     stats1     <- many1 statement
-     stats2     <- option [] $ reserved "else" >> many1 statement
+     stats1    <- many1 statement
+     stats2    <- option [] $ reserved "else" >> many1 statement
      reserved "fi"
-     exitcond   <- expression
+     exitcond  <- expression
      return $ If entrycond stats1 stats2 exitcond
 
 fromStmt :: Parser Stmt
@@ -234,7 +233,7 @@ skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> return Skip
 
 expression :: Parser Expr
-expression =  buildExpressionParser binOperators term
+expression = buildExpressionParser binOperators term
 
 term :: Parser Expr
 term =   parens expression
@@ -247,7 +246,7 @@ term =   parens expression
 numberExpr :: Parser Expr
 numberExpr = liftM Number integer
 
-lvalExpr ::  Parser Expr
+lvalExpr :: Parser Expr
 lvalExpr = liftM LV lval
 
 lval ::  Parser Lval
@@ -261,7 +260,7 @@ emptyExpr :: Parser Expr
 emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
 
 topExpr :: Parser Expr
-topExpr =  reserved "top" >> liftM Top (parens identifier)
+topExpr = reserved "top" >> liftM Top (parens identifier)
 
 binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                  , Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft
