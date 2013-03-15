@@ -1,17 +1,16 @@
-module Jana.Parser where
+module Jana.Parser (
+    parseString, parseFile,
+    cmpParse,
+    ) where
 
 import Prelude hiding (GT, LT, EQ)
-import System.IO
-import Control.Monad
-import Control.Applicative((<*))
-import Data.Either
-import Data.Maybe
+import Control.Monad (liftM, liftM2)
+import Data.Either (partitionEithers)
 
 import Text.Parsec hiding (Empty)
 import Text.Parsec.String
 import Text.Parsec.Expr
-import Text.Parsec.Language
-import qualified Text.Parsec.Token      as Token
+import qualified Text.Parsec.Token as Token
 
 import Jana.Ast
 
