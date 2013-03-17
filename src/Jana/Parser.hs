@@ -21,25 +21,9 @@ janaDef = Token.LanguageDef {
               , Token.nestedComments   = False
               , Token.identStart       = letter
               , Token.identLetter      = alphaNum
-              , Token.opStart          = oneOf "+-^*/%&|<>=!"
-              , Token.opLetter         = oneOf "&|="
-              , Token.reservedOpNames  = [ "+"
-                                         , "-"
-                                         , "^"
-                                         , "*"
-                                         , "/"
-                                         , "%"
-                                         , "&"
-                                         , "|"
-                                         , "&&"
-                                         , "||"
-                                         , "<"
-                                         , ">"
-                                         , "="
-                                         , "!="
-                                         , "<="
-                                         , ">="
-                                         ]
+              , Token.opStart          = oneOf ""
+              , Token.opLetter         = oneOf ""
+              , Token.reservedOpNames  = []
               , Token.reservedNames    = [ "procedure"
                                          , "int"
                                          , "stack"
