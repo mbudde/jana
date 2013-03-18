@@ -5,6 +5,7 @@ module Jana.Eval where
 
 import Prelude hiding (GT, LT, EQ)
 import Data.Bits
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Error
@@ -14,7 +15,7 @@ import Jana.Types
 
 
 newtype Eval a = E { runE :: StateT Store (ReaderT ProcEnv (Either JError)) a }
-               deriving (Monad, MonadReader ProcEnv, MonadState Store)
+               deriving (Monad, MonadError JError, MonadReader ProcEnv, MonadState Store)
 
 runEval :: Eval a -> Store -> ProcEnv -> Either JError (a, Store)
 runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
@@ -23,6 +24,13 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 {- instance Monad Eval Store where -}
     {- return = E . return -}
     {- e >>= f = S -}
+
+
+unpackInt :: Value -> Eval Integer
+unpackInt (JInt x) = return x
+unpackInt (JArray _) = throwError $ TypeMismatch "int" "array"
+unpackInt (JStack _) = throwError $ TypeMismatch "int" "stack"
+unpackInt JNil = throwError $ TypeMismatch "int" "stack"
 
 
 boolToInt :: Num a => (a -> a -> Bool) -> a -> a -> a
@@ -67,9 +75,9 @@ evalExpr (Number x) = return $ JInt x
 evalExpr Nil        = return JNil
 evalExpr (LV lval)  = evalLval lval
 evalExpr (BinOp op e1 e2) =
-  do JInt val1 <- evalExpr e1  -- FIXME: error when non-int
-     JInt val2 <- evalExpr e2
-     return $ JInt $ performOperation op val1 val2
+  do x <- unpackInt =<< evalExpr e1
+     y <- unpackInt =<< evalExpr e2
+     return $ JInt $ performOperation op x y
 evalExpr (Top _)    = undefined
 evalExpr (Empty _)  = undefined
 
