@@ -47,7 +47,7 @@ data Stmt
 
 -- Expression
 data Expr
-    = Number   Int
+    = Number   Integer
     | LV       Lval
     | BinOp    BinOp Expr Expr
     | Empty    Ident
@@ -58,7 +58,7 @@ data Expr
 -- Declaration
 data Vdecl
     = Scalar Type Ident
-    | Array  Ident Int
+    | Array  Ident Integer
     deriving (Eq, Show)
 
 -- Main procedure
