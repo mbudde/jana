@@ -47,7 +47,15 @@ evalExpr (BinOp op e1 e2) =
   do x <- evalExpr e1
      y <- evalExpr e2
      performOperation op x y
-evalExpr (Top _)    = undefined
-evalExpr (Empty _)  = undefined
+evalExpr (Top id)    =
+  do stack <- unpackStack =<< getVar id
+     case stack of
+       (x:xs) -> return $ JInt x
+       []     -> return nil
+evalExpr (Empty id)  =
+  do stack <- unpackStack =<< getVar id
+     case stack of
+       [] -> return $ JInt 1
+       _  -> return $ JInt 0
 
 
