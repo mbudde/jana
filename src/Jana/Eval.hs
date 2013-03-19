@@ -30,7 +30,6 @@ unpackInt :: Value -> Eval Integer
 unpackInt (JInt x) = return x
 unpackInt (JArray _) = throwError $ TypeMismatch "int" "array"
 unpackInt (JStack _) = throwError $ TypeMismatch "int" "stack"
-unpackInt JNil = throwError $ TypeMismatch "int" "stack"
 
 
 boolToInt :: Num a => (a -> a -> Bool) -> a -> a -> a
@@ -72,7 +71,7 @@ evalLval (Lookup id e) =
 
 evalExpr :: Expr -> Eval Value
 evalExpr (Number x) = return $ JInt x
-evalExpr Nil        = return JNil
+evalExpr Nil        = return $ nil
 evalExpr (LV lval)  = evalLval lval
 evalExpr (BinOp op e1 e2) =
   do x <- unpackInt =<< evalExpr e1

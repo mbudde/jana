@@ -1,5 +1,5 @@
 module Jana.Types (
-    Value(..),
+    Value(..), nil,
     JError(..),
     Store, emptyStore, bindIdent, lookupIdent,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
@@ -18,7 +18,6 @@ data Value
     = JInt Integer
     | JArray [Integer]
     | JStack [Integer]
-    | JNil
     deriving (Eq)
 
 instance Show Value where
@@ -26,7 +25,8 @@ instance Show Value where
   show (JArray xs) = show xs --"<array: " ++ show xs ++ ">"
   show (JStack []) = "nil"
   show (JStack xs) = "<" ++ intercalate "," (map show xs) ++ "]"
-  show JNil        = "nil"
+
+nil = JStack []
 
 data JError
     = UnboundVar String       -- FIXME: Add source pos
