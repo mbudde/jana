@@ -6,7 +6,7 @@ module Jana.Types (
     JError(..),
     Store, emptyStore, setVar, getVar,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
-    Eval,
+    Eval, runEval,
     ) where
 
 import Prelude hiding (GT, LT, EQ)

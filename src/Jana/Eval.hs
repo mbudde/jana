@@ -1,13 +1,20 @@
-module Jana.Eval where
+module Jana.Eval (
+  evalLval,
+  evalExpr,
+  runEval,
+  evalString,
+  ) where
 
 
 import Prelude hiding (GT, LT, EQ)
+import Data.Map (fromList)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
 
 import Jana.Ast
 import Jana.Types
+import Jana.Parser (parseExprString)
 
 
 unpackInt :: Value -> Eval Integer
@@ -58,4 +65,13 @@ evalExpr (Empty id)  =
        [] -> return $ JInt 1
        _  -> return $ JInt 0
 
+evalString :: String -> IO ()
+evalString str =
+  case runEval (evalExpr e) store emptyProcEnv of
+    Right (res, _) -> print res 
+    Left e         -> print e
+  where e = parseExprString str
+        store = fromList [("x", JInt 42)
+                         ,("a", JArray [1,2,3,4,5])
+                         ,("s", JStack [6,7,8,9,10])]
 

@@ -1,5 +1,5 @@
 module Jana.Parser (
-    parseString, parseFile,
+    parseExprString, parseString, parseFile,
     cmpParse,
     ) where
 
@@ -263,6 +263,11 @@ binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                  , Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft ]
                ]
 
+parseExprString :: String -> Expr
+parseExprString str =
+  case parse (expression) "" str of
+    Left e  -> error $ show e
+    Right r -> r
 
 parseString :: String -> Program
 parseString str =
