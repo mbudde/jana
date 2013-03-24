@@ -2,8 +2,8 @@
 
 module Jana.Types (
     Array, Stack,
-    Value(..), nil, performOperation, showValueType, typesMatch,
-    truthy,
+    Value(..), nil, performOperation, performModOperation,
+    showValueType, typesMatch, truthy,
     JError(..),
     Store, emptyStore, setVar, getVar,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
@@ -60,33 +60,37 @@ boolToInt :: Num a => (a -> a -> Bool) -> a -> a -> a
 boolToInt f x y = if f x y then 1 else 0
 
 
-getOperatorFunc :: (Integral a, Bits a) => BinOp -> a -> a -> a
-getOperatorFunc Add  = (+)
-getOperatorFunc Sub  = (-)
-getOperatorFunc Mul  = (*)
-getOperatorFunc Div  = undefined  -- FIXME
-getOperatorFunc Mod  = mod
-getOperatorFunc And  = (.&.)
-getOperatorFunc Or   = (.|.)
-getOperatorFunc Xor  = xor
-getOperatorFunc LAnd = undefined
-getOperatorFunc LOr  = undefined
-getOperatorFunc GT   = boolToInt (>)
-getOperatorFunc LT   = boolToInt (<)
-getOperatorFunc EQ   = boolToInt (==)
-getOperatorFunc NEQ  = boolToInt (/=)
-getOperatorFunc GE   = boolToInt (>=)
-getOperatorFunc LE   = boolToInt (<=)
-
+opFunc :: (Integral a, Bits a) => BinOp -> a -> a -> a
+opFunc Add  = (+)
+opFunc Sub  = (-)
+opFunc Mul  = (*)
+opFunc Div  = undefined  -- FIXME
+opFunc Mod  = mod
+opFunc And  = (.&.)
+opFunc Or   = (.|.)
+opFunc Xor  = xor
+opFunc LAnd = undefined
+opFunc LOr  = undefined
+opFunc GT   = boolToInt (>)
+opFunc LT   = boolToInt (<)
+opFunc EQ   = boolToInt (==)
+opFunc NEQ  = boolToInt (/=)
+opFunc GE   = boolToInt (>=)
+opFunc LE   = boolToInt (<=)
 
 performOperation :: BinOp -> Value -> Value -> Eval Value
 performOperation op (JInt x) (JInt y) =
-  return $ JInt $ getOperatorFunc op x y
-performOperation _ (JStack _) val =
+  return $ JInt $ opFunc op x y
+performOperation _ (JInt _) val =
   throwError $ TypeMismatch "int" (showValueType val)
 performOperation _ val _ =
   throwError $ TypeMismatch "int" (showValueType val)
 
+performModOperation :: ModOp -> Value -> Value -> Eval Value
+performModOperation modOp = performOperation $ modOpToBinOp modOp
+  where modOpToBinOp AddEq = Add
+        modOpToBinOp SubEq = Sub
+        modOpToBinOp XorEq = Xor
 
 --
 -- Environment

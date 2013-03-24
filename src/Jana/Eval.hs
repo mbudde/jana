@@ -8,6 +8,7 @@ module Jana.Eval (
 
 import Prelude hiding (GT, LT, EQ)
 import Data.Map (fromList)
+import Data.List (genericSplitAt)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
@@ -47,10 +48,29 @@ arrayLookup arr idx =
     else return $ JInt $ arr !! idx'
   where idx' = fromInteger idx
 
+arrayModify :: Array -> Integer -> Integer -> Array
+arrayModify arr idx val = xs ++ val : ys
+  where (xs, _:ys) = genericSplitAt idx arr
+
+
+assignLval :: ModOp -> Lval -> Expr -> Eval ()
+assignLval modOp (Var id) expr =
+  do val    <- evalExpr expr
+     val1   <- getVar id
+     performModOperation modOp val val1 >>= setVar id
+assignLval modOp (Lookup id idxExpr) expr =
+  do idx    <- unpackInt =<< evalExpr idxExpr
+     arr    <- unpackArray =<< getVar id
+     val    <- evalExpr expr
+     oldval <- arrayLookup arr idx
+     newval <- unpackInt =<< performModOperation modOp oldval val
+     setVar id $ JArray $ arrayModify arr idx newval
+
 evalStmts :: [Stmt] -> Eval ()
 evalStmts = mapM_ evalStmt
 
 evalStmt :: Stmt -> Eval ()
+evalStmt (Assign modOp lval expr) = assignLval modOp lval expr
 evalStmt (If e1 s1 s2 e2) =
   do val1 <- evalExpr e1 -- XXX: int required?
      if truthy val1
