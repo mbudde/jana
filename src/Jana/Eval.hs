@@ -14,7 +14,7 @@ import Control.Monad.Error
 
 import Jana.Ast
 import Jana.Types
-import Jana.Parser (parseExprString)
+import Jana.Parser (parseExprString, parseStmtsString)
 
 
 unpackInt :: Value -> Eval Integer
@@ -109,10 +109,10 @@ evalExpr (Empty id)  =
 
 evalString :: String -> IO ()
 evalString str =
-  case runEval (evalExpr e) store emptyProcEnv of
-    Right (res, _) -> print res 
+  case runEval (evalStmts e) store emptyProcEnv of
+    Right (res, s) -> print res >> print s
     Left e         -> print e
-  where e = parseExprString str
+  where e = parseStmtsString str
         store = fromList [("x", JInt 42)
                          ,("a", JArray [1,2,3,4,5])
                          ,("s", JStack [6,7,8,9,10])]
