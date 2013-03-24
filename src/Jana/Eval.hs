@@ -114,6 +114,7 @@ evalString str =
     Left e         -> print e
   where e = parseStmtsString str
         store = fromList [("x", JInt 42)
+                         ,("y", JInt 66)
                          ,("a", JArray [1,2,3,4,5])
                          ,("s", JStack [6,7,8,9,10])]
 
