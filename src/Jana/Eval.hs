@@ -29,6 +29,16 @@ unpackStack :: Value -> Eval Stack
 unpackStack (JStack x) = return x
 unpackStack val = throwError $ TypeMismatch "stack" (showValueType val)
 
+assert :: Bool -> Expr -> Eval ()
+assert bool expr =
+  do val1 <- evalExpr expr
+     if truthy val1 == bool
+       then return ()
+       else throwError $ AssertionFail $ "should be " ++ show bool
+
+assertTrue = assert True
+assertFalse = assert False
+
 
 arrayLookup :: Array -> Integer -> Eval Value
 arrayLookup arr idx =
@@ -37,6 +47,38 @@ arrayLookup arr idx =
     else return $ JInt $ arr !! idx'
   where idx' = fromInteger idx
 
+evalStmts :: [Stmt] -> Eval ()
+evalStmts = mapM_ evalStmt
+
+evalStmt :: Stmt -> Eval ()
+evalStmt (If e1 s1 s2 e2) =
+  do val1 <- evalExpr e1 -- XXX: int required?
+     if truthy val1
+       then do evalStmts s1
+               assertTrue e2
+       else do evalStmts s2
+               assertFalse e2
+evalStmt (From e1 s1 s2 e2) =
+  do assertTrue e1
+     evalStmts s1
+     loop
+  where loop = do val <- evalExpr e2
+                  if truthy val
+                    then return ()
+                    else loopRec
+        loopRec = do evalStmts s2
+                     assertFalse e1
+                     evalStmts s1
+                     loop
+evalStmt (Swap id1 id2) =
+  do val1 <- getVar id1
+     val2 <- getVar id2
+     if typesMatch val1 val2
+       then setVar id2 val1 >> setVar id1 val2
+       else throwError $ TypeError ("cannot swap '" ++ showValueType val1 ++
+                                    "' and '" ++ showValueType val2 ++
+                                    "' variables")
+evalStmt Skip = return ()
 
 evalLval :: Lval -> Eval Value
 evalLval (Var id) = getVar id

@@ -2,7 +2,8 @@
 
 module Jana.Types (
     Array, Stack,
-    Value(..), nil, performOperation, showValueType,
+    Value(..), nil, performOperation, showValueType, typesMatch,
+    truthy,
     JError(..),
     Store, emptyStore, setVar, getVar,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
@@ -41,7 +42,18 @@ showValueType (JInt _) = "int"
 showValueType (JStack _) = "stack"
 showValueType (JArray _) = "array"
 
+typesMatch :: Value -> Value -> Bool
+typesMatch (JInt _) (JInt _) = True
+typesMatch (JArray _) (JArray _) = True
+typesMatch (JStack _) (JStack _) = True
+typesMatch _ _ = False
+
 nil = JStack []
+
+truthy :: Value -> Bool
+truthy (JInt 0)    = False
+truthy (JStack []) = False
+truthy _           = True
 
 
 boolToInt :: Num a => (a -> a -> Bool) -> a -> a -> a
@@ -126,19 +138,24 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 
 
 data JError       -- FIXME: Add source pos
-  = UnboundVar   String           -- ident
-  | TypeMismatch String String    -- expected-type found-type
+  = UnboundVar    String           -- ident
+  | TypeError     String           -- message
+  | TypeMismatch  String String    -- expected-type found-type
   | OutOfBounds
-  | UndefProc    String           -- ident
-  | Unknown      String           -- message
+  | AssertionFail String
+  | UndefProc     String           -- ident
+  | Unknown       String           -- message
 
 instance Show JError where
-  show (UnboundVar name) = "variable not declared: " ++ name
-  show (TypeMismatch expType foundType) = "expected type " ++ expType ++
-                                          " but got " ++ foundType
-  show (OutOfBounds) = "array lookup was out of bounds"
-  show (UndefProc name) = "function not defined: " ++ name
-  show (Unknown s) = "unknown error: " ++ s
+  show (UnboundVar name) =
+    "variable not declared: " ++ name
+  show (TypeError s)     = s
+  show (TypeMismatch expType foundType) =
+    "expected type " ++ expType ++ " but got " ++ foundType
+  show (OutOfBounds)     = "array lookup was out of bounds"
+  show (AssertionFail s) = "assertion failed: " ++ s
+  show (UndefProc name)  = "function not defined: " ++ name
+  show (Unknown s)       = "unknown error: " ++ s
 
 instance Error JError where
   noMsg  = Unknown "Unknown error"
