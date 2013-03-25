@@ -1,0 +1,30 @@
+// David Gries: The science of programming, 1987. pp.270
+
+procedure permtocode(int k, int j, int x)
+    from k = 6
+        loop k -= 1
+            from j = 0
+                loop
+                    if x[j] > x[k] then
+                        x[j] -= 1
+                    fi x[j] >= x[k]
+                    j += 1
+                until j = k
+        j -= k
+    until k = 0
+
+// inputs:  2 0 3 1 5 4
+// outputs: 0 0 2 1 4 4
+procedure main()
+    int k
+    int j
+    int x[6]
+
+    x[0] += 2
+    x[1] += 0
+    x[2] += 3
+    x[3] += 1
+    x[4] += 5
+    x[5] += 4
+    k += 6
+    call permtocode(k, j, x)
