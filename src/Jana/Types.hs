@@ -34,9 +34,9 @@ data Value
 
 instance Show Value where
   show (JInt x)    = show x
-  show (JArray xs) = show xs --"<array: " ++ show xs ++ ">"
+  show (JArray xs) = "{" ++ intercalate ", " (map show xs) ++ "}"
   show (JStack []) = "nil"
-  show (JStack xs) = "<" ++ intercalate "," (map show xs) ++ "]"
+  show (JStack xs) = "<" ++ intercalate ", " (map show xs) ++ "]"
 
 showValueType :: Value -> String
 showValueType (JInt _) = "int"
@@ -101,7 +101,8 @@ type Store = Map.Map Ident Value
 
 showStore :: Store -> String
 showStore store = intercalate "\n" (map printVdecl (Map.toList store))
-  where printVdecl (name, val) = printf "%s = %s" name (show val)
+  where printVdecl (name, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
+        printVdecl (name, val) = printf "%s = %s" name (show val)
 
 emptyStore = Map.empty
 
