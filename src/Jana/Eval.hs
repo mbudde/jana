@@ -60,6 +60,28 @@ arrayModify arr idx val = xs ++ val : ys
   where (xs, _:ys) = genericSplitAt idx arr
 
 
+evalProc :: Proc -> [Ident] -> Eval ()
+evalProc proc args =
+  do values <- mapM getVar args
+     oldStoreEnv <- get
+     put emptyStore
+     bindArgs (params proc) values
+     {- put $ envFromList $ checkArgs (params proc) values -}
+     evalStmts $ body proc
+     newValues <- mapM getVar $ map snd (params proc)
+     put oldStoreEnv
+     mapM_ (uncurry setVar) (zip args newValues)
+  where bindArg :: (Type, Ident) -> Value -> Eval ()
+        bindArg (typ, id) val = checkType typ val >> setVar id val
+        bindArgs params values =
+          do if expArgs /= gotArgs
+               then throwError $ ArgumentError (procname proc)
+                                               expArgs gotArgs
+               else mapM_ (uncurry bindArg) (zip params values)
+        expArgs = length (params proc)
+        gotArgs = length args
+
+
 assignLval :: ModOp -> Lval -> Expr -> Eval ()
 assignLval modOp (Var id) expr =
   do val    <- evalExpr expr
@@ -128,7 +150,8 @@ evalStmt (Local assign1 stmts assign2) =
                       printf "'%s' has the value '%s' not '%s'"
                              id (show val') (show val)
 evalStmt (Call funId args) =
-  undefined
+  do proc <- getProc funId
+     evalProc proc args
 evalStmt (Uncall funId args) =
   undefined
 evalStmt (Swap id1 id2) =
@@ -170,7 +193,7 @@ evalExpr (Empty id)  =
 
 evalString :: String -> IO ()
 evalString str =
-  case runEval (evalStmts e) store emptyProcEnv of
+  case runEval (evalStmts e) store procs of
     Right (res, s) -> print res >> print s
     Left e         -> print e
   where e = parseStmtsString str
@@ -179,4 +202,7 @@ evalString str =
                          ,("z", JInt 0)
                          ,("a", JArray [1,2,3,4,5])
                          ,("s", JStack [6,7,8,9,10])]
+        procs = fromList [("foo", Proc { procname = "foo"
+                                       , params = [(Int, "x")]
+                                       , body = [Assign AddEq (Var "x") (Number 5)] }) ]
 

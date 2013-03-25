@@ -5,8 +5,8 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     JError(..),
-    Store, emptyStore, bindVar, setVar, getVar,
-    ProcEnv, emptyProcEnv, bindProc, lookupProc,
+    Store, emptyStore, envFromList, bindVar, setVar, getVar,
+    ProcEnv, emptyProcEnv, bindProc, getProc,
     Eval, runEval,
     ) where
 
@@ -16,6 +16,7 @@ import Data.List (intercalate)
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Error
+import Text.Printf (printf)
 import qualified Data.Maybe as Maybe
 import qualified Data.Map as Map
 
@@ -100,6 +101,9 @@ type Store = Map.Map Ident Value
 
 emptyStore = Map.empty
 
+envFromList :: [(Ident, Value)] -> Store
+envFromList = Map.fromList
+
 bindVar :: Ident -> Value -> Eval ()
 bindVar id val =
   do storeEnv <- get
@@ -128,8 +132,12 @@ bindProc name proc env
       then Map.insert name proc env
       else error "function already defined"
 
-lookupProc :: Ident -> ProcEnv -> Maybe Proc
-lookupProc = Map.lookup
+getProc :: Ident -> Eval Proc
+getProc funId =      -- FIXME: calling main?
+  do procEnv <- ask
+     case Map.lookup funId procEnv of
+       Just proc -> return proc
+       Nothing   -> throwError $ UndefProc funId
 
 
 --
@@ -157,6 +165,7 @@ data JError       -- FIXME: Add source pos
   | EmptyStack
   | AssertionFail String
   | UndefProc     String           -- ident
+  | ArgumentError String Int Int   -- proc-name expected got
   | Unknown       String           -- message
 
 instance Show JError where
@@ -170,7 +179,10 @@ instance Show JError where
   show (OutOfBounds)     = "array lookup was out of bounds"
   show (EmptyStack)      = "cannot pop from empty stack"
   show (AssertionFail s) = "assertion failed: " ++ s
-  show (UndefProc name)  = "function not defined: " ++ name
+  show (UndefProc name)  = printf "procedure '%s' is not defined" name
+  show (ArgumentError name exp got) =
+    printf "procedure '%s' expects %d argument(s) but got %d"
+           name exp got
   show (Unknown s)       = "unknown error: " ++ s
 
 instance Error JError where
