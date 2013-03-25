@@ -12,6 +12,7 @@ import Data.List (genericSplitAt)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
+import Text.Printf (printf)
 
 import Jana.Ast
 import Jana.Types
@@ -99,7 +100,8 @@ evalStmt (Pop id1 id2) =
   do head <- unpackInt   =<< getVar id1
      tail <- unpackStack =<< getVar id2
      if head /= 0
-       then throwError $ AssertionFail $ "cannot pop to non-zero variable '" ++ id1 ++ "'"
+       then throwError $ AssertionFail $
+              "cannot pop to non-zero variable '" ++ id1 ++ "'"
        else case tail of
          (x:xs) -> setVar id1 (JInt x) >> setVar id2 (JStack xs)
          []     -> throwError EmptyStack
@@ -119,8 +121,9 @@ evalStmt (Local assign1 stmts assign2) =
              val' <- getVar id
              if val == val'
                then return ()
-               else throwError $ AssertionFail $ "'" ++ id ++ "' has the value '" ++
-                                                 show val' ++ "' not '" ++ show val ++ "'"
+               else throwError $ AssertionFail $
+                      printf "'%s' has the value '%s' not '%s'"
+                             id (show val') (show val)
 evalStmt (Call funId args) =
   undefined
 evalStmt (Uncall funId args) =
@@ -130,9 +133,9 @@ evalStmt (Swap id1 id2) =
      val2 <- getVar id2
      if typesMatch val1 val2
        then setVar id2 val1 >> setVar id1 val2
-       else throwError $ TypeError ("cannot swap '" ++ showValueType val1 ++
-                                    "' and '" ++ showValueType val2 ++
-                                    "' variables")
+       else throwError $ TypeError $
+              printf "cannot swap '%s' and '%s' variables"
+                     (showValueType val1) (showValueType val2)
 evalStmt Skip = return ()
 
 evalLval :: Lval -> Eval Value
