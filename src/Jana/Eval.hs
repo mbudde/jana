@@ -1,4 +1,5 @@
 module Jana.Eval (
+  runProgram,
   evalLval,
   evalExpr,
   runEval,
