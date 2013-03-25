@@ -93,9 +93,9 @@ evalProc proc args =
 
 assignLval :: ModOp -> Lval -> Expr -> Eval ()
 assignLval modOp (Var id) expr =
-  do val    <- evalExpr expr
-     val1   <- getVar id
-     performModOperation modOp val val1 >>= setVar id
+  do exprVal <- evalExpr expr
+     varVal  <- getVar id
+     performModOperation modOp varVal exprVal >>= setVar id
 assignLval modOp (Lookup id idxExpr) expr =
   do idx    <- unpackInt =<< evalExpr idxExpr
      arr    <- unpackArray =<< getVar id
