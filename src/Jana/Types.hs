@@ -3,7 +3,7 @@
 module Jana.Types (
     Array, Stack,
     Value(..), nil, performOperation, performModOperation,
-    showValueType, typesMatch, checkType, truthy,
+    showValueType, typesMatch, truthy,
     JError(..),
     Store, emptyStore, bindVar, setVar, getVar,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
@@ -47,11 +47,6 @@ typesMatch (JInt _) (JInt _) = True
 typesMatch (JArray _) (JArray _) = True
 typesMatch (JStack _) (JStack _) = True
 typesMatch _ _ = False
-
-checkType :: Type -> Value -> Bool
-checkType Int (JInt _) = True
-checkType Stack (JStack _) = True
-checkType _ _ = False
 
 nil = JStack []
 

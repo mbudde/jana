@@ -41,6 +41,12 @@ assert bool expr =
 assertTrue = assert True
 assertFalse = assert False
 
+checkType :: Type -> Value -> Eval ()
+checkType Int   (JInt _)   = return ()
+checkType Stack (JStack _) = return ()
+checkType typ val = throwError $ TypeMismatch
+  (if typ == Int then "int" else "stack") (showValueType val)
+
 
 arrayLookup :: Array -> Integer -> Eval Value
 arrayLookup arr idx =
@@ -111,11 +117,8 @@ evalStmt (Local assign1 stmts assign2) =
      assertBinding assign2
   where createBinding (typ, id, expr) =
           do val <- evalExpr expr
-             if checkType typ val
-               then bindVar id val
-               else throwError $ TypeMismatch (if typ == Int then "int"
-                                                             else "stack")
-                                              (showValueType val)
+             checkType typ val
+             bindVar id val
         assertBinding (_, id, expr) =   -- XXX: check type?
           do val <- evalExpr expr
              val' <- getVar id
