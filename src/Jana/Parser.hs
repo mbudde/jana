@@ -254,10 +254,10 @@ binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                  , Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft ]
                , [ Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft
                  , Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft ]
-               , [ Infix (reservedOp "<"   >> return (BinOp LT  )) AssocLeft
-                 , Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft
-                 , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
+               , [ Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft
+                 , Infix (reservedOp "<"   >> return (BinOp LT  )) AssocLeft
                  , Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft
+                 , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
                  , Infix (reservedOp "="   >> return (BinOp EQ  )) AssocLeft
                  , Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft ]
                , [ Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft
