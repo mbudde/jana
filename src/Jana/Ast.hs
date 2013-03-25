@@ -1,6 +1,8 @@
 
 module Jana.Ast where
 
+import Text.Parsec.Pos
+
 -- Data types
 data Type
     = Int
@@ -33,37 +35,37 @@ data BinOp
 
 -- Statement
 data Stmt
-    = Assign   ModOp Lval Expr
-    | If       Expr [Stmt] [Stmt] Expr
-    | From     Expr [Stmt] [Stmt] Expr
-    | Push     Ident Ident
-    | Pop      Ident Ident
-    | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr)
-    | Call     Ident [Ident]
-    | Uncall   Ident [Ident]
-    | Swap     Ident Ident
-    | Skip
+    = Assign   ModOp Lval Expr SourcePos
+    | If       Expr [Stmt] [Stmt] Expr SourcePos
+    | From     Expr [Stmt] [Stmt] Expr SourcePos
+    | Push     Ident Ident SourcePos
+    | Pop      Ident Ident SourcePos
+    | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr) SourcePos
+    | Call     Ident [Ident] SourcePos
+    | Uncall   Ident [Ident] SourcePos
+    | Swap     Ident Ident SourcePos
+    | Skip SourcePos
     deriving (Eq, Show)
 
 -- Expression
 data Expr
     = Number   Integer
-    | LV       Lval
+    | LV       Lval SourcePos
     | BinOp    BinOp Expr Expr
-    | Empty    Ident
-    | Top      Ident
-    | Nil
+    | Empty    Ident SourcePos
+    | Top      Ident SourcePos
+    | Nil SourcePos
     deriving (Eq, Show)
 
 -- Declaration
 data Vdecl
-    = Scalar Type Ident
-    | Array  Ident Integer
+    = Scalar Type Ident SourcePos
+    | Array  Ident Integer SourcePos
     deriving (Eq, Show)
 
 -- Main procedure
 data ProcMain
-    = ProcMain [Vdecl] [Stmt]
+    = ProcMain [Vdecl] [Stmt] SourcePos
     deriving (Eq, Show)
 
 -- Procedure definition
@@ -71,6 +73,7 @@ data Proc
     = Proc { procname  :: Ident
            , params    :: [(Type, Ident)]   -- Zero or more
            , body      :: [Stmt]
+           , pos       :: SourcePos
            }
     deriving (Eq, Show)
 
