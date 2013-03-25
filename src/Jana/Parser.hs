@@ -224,6 +224,7 @@ term =   parens expression
      <|> lvalExpr
      <|> emptyExpr
      <|> topExpr
+     <|> nilExpr
      <?> "expression"
 
 numberExpr :: Parser Expr
@@ -235,6 +236,9 @@ lvalExpr = liftM LV lval
 lval ::  Parser Lval
 lval =   try lookUp
      <|> liftM Var identifier
+
+nilExpr :: Parser Expr
+nilExpr = reserved "nil" >> return Nil
 
 lookUp :: Parser Lval
 lookUp = liftM2 Lookup identifier (brackets expression)
