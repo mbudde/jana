@@ -12,7 +12,7 @@ syn keyword janusKeyword swap local delocal push pop nil
 syn keyword janusKeyword call uncall
 syn keyword janusStatement procedure nextgroup=janusProcedure skipwhite
 syn keyword janusConditional if then else fi
-syn keyword janusRepeat for do loop until
+syn keyword janusRepeat from do loop until
 syn keyword janusOperator empty top
 
 syn keyword janusType int stack
@@ -20,6 +20,8 @@ syn keyword janusType int stack
 syn match   janusProcedure "\w\+" contained
 
 syn match   janusNumber	"\<\%([1-9]\d*\|0\)\>"
+
+syn match   janusComment "//.*$"
 
 
 hi def link janusNumber         Number
@@ -30,6 +32,7 @@ hi def link janusRepeat         Repeat
 hi def link janusOperator       Operator
 hi def link janusKeyword        Keyword
 hi def link janusType           Type
+hi def link janusComment        Comment
 
 
 let b:current_syntax = "janus"
