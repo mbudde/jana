@@ -76,7 +76,9 @@ evalMain (ProcMain vdecls body) =
      evalStmts body
   where initBinding (Scalar Int id)   = bindVar id $ JInt 0
         initBinding (Scalar Stack id) = bindVar id nil
-        initBinding (Array id size)   = bindVar id $ initArr size
+        initBinding (Array id size)   = if size < 1
+                                          then throwError ArraySize
+                                          else bindVar id $ initArr size
         initArr size = JArray $ genericReplicate size 0
 
 evalProc :: Proc -> [Ident] -> Eval ()

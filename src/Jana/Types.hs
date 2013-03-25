@@ -173,6 +173,7 @@ data JError       -- FIXME: Add source pos
   | AssertionFail String
   | UndefProc     String           -- ident
   | ArgumentError String Int Int   -- proc-name expected got
+  | ArraySize
   | Unknown       String           -- message
 
 instance Show JError where
@@ -190,6 +191,7 @@ instance Show JError where
   show (ArgumentError name exp got) =
     printf "procedure '%s' expects %d argument(s) but got %d"
            name exp got
+  show (ArraySize)       = "array size must be greater than or equal to one"
   show (Unknown s)       = "unknown error: " ++ s
 
 instance Error JError where
