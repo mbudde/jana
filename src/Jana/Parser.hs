@@ -15,9 +15,9 @@ import qualified Text.Parsec.Token as Token
 import Jana.Ast
 
 janaDef = Token.LanguageDef {
-                Token.commentStart     = "(*"
-              , Token.commentEnd       = "*)"
-              , Token.commentLine      = "#"
+                Token.commentStart     = "/*"
+              , Token.commentEnd       = "*/"
+              , Token.commentLine      = "//"
               , Token.nestedComments   = False
               , Token.identStart       = letter
               , Token.identLetter      = alphaNum

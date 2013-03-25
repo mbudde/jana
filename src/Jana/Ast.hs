@@ -70,7 +70,8 @@ data ProcMain
 data Proc
     = Proc { procname  :: Ident
            , params    :: [(Type, Ident)]   -- Zero or more
-           , body      :: [Stmt] }
+           , body      :: [Stmt]
+           }
     deriving (Eq, Show)
 
 type Program = (ProcMain, [Proc])
