@@ -5,7 +5,7 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     JError(..),
-    Store, emptyStore, bindVar, setVar, getVar,
+    Store, showStore, emptyStore, bindVar, setVar, getVar,
     ProcEnv, emptyProcEnv, procEnvFromList, bindProc, getProc,
     Eval, runEval,
     ) where
@@ -98,6 +98,10 @@ performModOperation modOp = performOperation $ modOpToBinOp modOp
 --
 
 type Store = Map.Map Ident Value
+
+showStore :: Store -> String
+showStore store = intercalate "\n" (map printVdecl (Map.toList store))
+  where printVdecl (name, val) = printf "%s = %s" name (show val)
 
 emptyStore = Map.empty
 

@@ -65,8 +65,8 @@ arrayModify arr idx val = xs ++ val : ys
 runProgram :: Program -> IO ()
 runProgram (main, procs) =
   case runEval (evalMain main) emptyStore (procEnvFromList procs) of
-    Right (res, s) -> print res >> print s
-    Left err       -> print err
+    Right (_, s) -> putStrLn $ showStore s
+    Left err     -> print err
 
 
 evalMain :: ProcMain -> Eval ()
