@@ -44,6 +44,7 @@ assertFalse = assert False
 
 checkType :: Type -> Value -> Eval ()
 checkType Int   (JInt _)   = return ()
+checkType Int   (JArray _) = return ()
 checkType Stack (JStack _) = return ()
 checkType typ val = throwError $ TypeMismatch
   (if typ == Int then "int" else "stack") (showValueType val)
