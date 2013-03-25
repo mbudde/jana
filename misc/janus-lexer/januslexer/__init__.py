@@ -30,8 +30,8 @@ class JanusLexer(RegexLexer):
     tokens = {
         'whitespace': [
             (r'\s+', Text),
-            (r'\(\*', Comment.Multiline, 'comment'),
-            (r'#.*?$', Comment.Single),
+            (r'\/\*', Comment.Multiline, 'comment'),
+            (r'\/\/.*$', Comment.Single),
         ],
         'root': [
             include('whitespace'),
@@ -52,9 +52,9 @@ class JanusLexer(RegexLexer):
             (r'[+-]?\d+', Number.Integer),
         ],
         'comment': [
-            (r'[^(*)]', Comment.Multiline),
-            (r'\(\*', Comment.Multiline, '#push'),
-            (r'\*\)', Comment.Multiline, '#pop'),
-            (r'[(*)]', Comment.Multiline),
+            (r'[^/*)]', Comment.Multiline),
+            (r'\/\*', Comment.Multiline, '#push'),
+            (r'\*\/', Comment.Multiline, '#pop'),
+            (r'[/*]', Comment.Multiline),
         ],
     }
