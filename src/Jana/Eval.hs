@@ -8,7 +8,7 @@ module Jana.Eval (
 
 import Prelude hiding (GT, LT, EQ)
 import Data.Map (fromList)
-import Data.List (genericSplitAt)
+import Data.List (genericSplitAt, genericReplicate)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
@@ -59,6 +59,15 @@ arrayModify :: Array -> Integer -> Integer -> Array
 arrayModify arr idx val = xs ++ val : ys
   where (xs, _:ys) = genericSplitAt idx arr
 
+
+evalMain :: ProcMain -> Eval ()
+evalMain (ProcMain vdecls body) =
+  do mapM_ initBinding vdecls
+     evalStmts body
+  where initBinding (Scalar Int id)   = bindVar id $ JInt 0
+        initBinding (Scalar Stack id) = bindVar id nil
+        initBinding (Array id size)   = bindVar id $ initArr size
+        initArr size = JArray $ genericReplicate size 0
 
 evalProc :: Proc -> [Ident] -> Eval ()
 evalProc proc args =
