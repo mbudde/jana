@@ -146,6 +146,7 @@ data JError       -- FIXME: Add source pos
   | TypeError     String           -- message
   | TypeMismatch  String String    -- expected-type found-type
   | OutOfBounds
+  | EmptyStack
   | AssertionFail String
   | UndefProc     String           -- ident
   | Unknown       String           -- message
@@ -157,6 +158,7 @@ instance Show JError where
   show (TypeMismatch expType foundType) =
     "expected type " ++ expType ++ " but got " ++ foundType
   show (OutOfBounds)     = "array lookup was out of bounds"
+  show (EmptyStack)      = "cannot pop from empty stack"
   show (AssertionFail s) = "assertion failed: " ++ s
   show (UndefProc name)  = "function not defined: " ++ name
   show (Unknown s)       = "unknown error: " ++ s

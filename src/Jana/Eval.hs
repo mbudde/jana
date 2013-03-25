@@ -90,6 +90,19 @@ evalStmt (From e1 s1 s2 e2) =
                      assertFalse e1
                      evalStmts s1
                      loop
+evalStmt (Push id1 id2) =
+  do head <- unpackInt   =<< getVar id1
+     tail <- unpackStack =<< getVar id2
+     setVar id2 $ JStack $ head : tail
+     setVar id1 $ JInt 0
+evalStmt (Pop id1 id2) =
+  do head <- unpackInt   =<< getVar id1
+     tail <- unpackStack =<< getVar id2
+     if head /= 0
+       then throwError $ AssertionFail $ "cannot pop to non-zero variable '" ++ id1 ++ "'"
+       else case tail of
+         (x:xs) -> setVar id1 (JInt x) >> setVar id2 (JStack xs)
+         []     -> throwError EmptyStack
 evalStmt (Swap id1 id2) =
   do val1 <- getVar id1
      val2 <- getVar id2
@@ -135,6 +148,7 @@ evalString str =
   where e = parseStmtsString str
         store = fromList [("x", JInt 42)
                          ,("y", JInt 66)
+                         ,("z", JInt 0)
                          ,("a", JArray [1,2,3,4,5])
                          ,("s", JStack [6,7,8,9,10])]
 
