@@ -3,9 +3,9 @@
 module Jana.Types (
     Array, Stack,
     Value(..), nil, performOperation, performModOperation,
-    showValueType, typesMatch, truthy,
+    showValueType, typesMatch, checkType, truthy,
     JError(..),
-    Store, emptyStore, setVar, getVar,
+    Store, emptyStore, bindVar, setVar, getVar,
     ProcEnv, emptyProcEnv, bindProc, lookupProc,
     Eval, runEval,
     ) where
@@ -47,6 +47,11 @@ typesMatch (JInt _) (JInt _) = True
 typesMatch (JArray _) (JArray _) = True
 typesMatch (JStack _) (JStack _) = True
 typesMatch _ _ = False
+
+checkType :: Type -> Value -> Bool
+checkType Int (JInt _) = True
+checkType Stack (JStack _) = True
+checkType _ _ = False
 
 nil = JStack []
 
@@ -100,6 +105,13 @@ type Store = Map.Map Ident Value
 
 emptyStore = Map.empty
 
+bindVar :: Ident -> Value -> Eval ()
+bindVar id val =
+  do storeEnv <- get
+     case Map.lookup id storeEnv of
+       Nothing  -> put $ Map.insert id val storeEnv
+       Just val -> throwError $ AlreadyBound id
+
 setVar :: Ident -> Value -> Eval ()
 setVar id val = modify $ Map.insert id val
 
@@ -143,6 +155,7 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 
 data JError       -- FIXME: Add source pos
   = UnboundVar    String           -- ident
+  | AlreadyBound  String           -- ident
   | TypeError     String           -- message
   | TypeMismatch  String String    -- expected-type found-type
   | OutOfBounds
@@ -154,6 +167,8 @@ data JError       -- FIXME: Add source pos
 instance Show JError where
   show (UnboundVar name) =
     "variable not declared: " ++ name
+  show (AlreadyBound name) =
+    "variable name is already bound: " ++ name
   show (TypeError s)     = s
   show (TypeMismatch expType foundType) =
     "expected type " ++ expType ++ " but got " ++ foundType

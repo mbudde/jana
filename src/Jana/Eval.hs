@@ -103,6 +103,28 @@ evalStmt (Pop id1 id2) =
        else case tail of
          (x:xs) -> setVar id1 (JInt x) >> setVar id2 (JStack xs)
          []     -> throwError EmptyStack
+evalStmt (Local assign1 stmts assign2) =
+  do createBinding assign1
+     evalStmts stmts
+     assertBinding assign2
+  where createBinding (typ, id, expr) =
+          do val <- evalExpr expr
+             if checkType typ val
+               then bindVar id val
+               else throwError $ TypeMismatch (if typ == Int then "int"
+                                                             else "stack")
+                                              (showValueType val)
+        assertBinding (_, id, expr) =   -- XXX: check type?
+          do val <- evalExpr expr
+             val' <- getVar id
+             if val == val'
+               then return ()
+               else throwError $ AssertionFail $ "'" ++ id ++ "' has the value '" ++
+                                                 show val' ++ "' not '" ++ show val ++ "'"
+evalStmt (Call funId args) =
+  undefined
+evalStmt (Uncall funId args) =
+  undefined
 evalStmt (Swap id1 id2) =
   do val1 <- getVar id1
      val2 <- getVar id2
