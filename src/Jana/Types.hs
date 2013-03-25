@@ -5,8 +5,8 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     JError(..),
-    Store, emptyStore, envFromList, bindVar, setVar, getVar,
-    ProcEnv, emptyProcEnv, bindProc, getProc,
+    Store, emptyStore, bindVar, setVar, getVar,
+    ProcEnv, emptyProcEnv, procEnvFromList, bindProc, getProc,
     Eval, runEval,
     ) where
 
@@ -125,6 +125,9 @@ getVar id =
 type ProcEnv = Map.Map Ident Proc
 
 emptyProcEnv = Map.empty
+
+procEnvFromList :: [Proc] -> ProcEnv
+procEnvFromList = Map.fromList . map (\p -> (procname p, p))
 
 bindProc :: Ident -> Proc -> ProcEnv -> ProcEnv
 bindProc name proc env

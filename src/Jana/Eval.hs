@@ -60,6 +60,14 @@ arrayModify arr idx val = xs ++ val : ys
   where (xs, _:ys) = genericSplitAt idx arr
 
 
+
+runProgram :: Program -> IO ()
+runProgram (main, procs) =
+  case runEval (evalMain main) emptyStore (procEnvFromList procs) of
+    Right (res, s) -> print res >> print s
+    Left err       -> print err
+
+
 evalMain :: ProcMain -> Eval ()
 evalMain (ProcMain vdecls body) =
   do mapM_ initBinding vdecls
@@ -75,7 +83,6 @@ evalProc proc args =
      oldStoreEnv <- get
      put emptyStore
      bindArgs (params proc) values
-     {- put $ envFromList $ checkArgs (params proc) values -}
      evalStmts $ body proc
      newValues <- mapM getVar $ map snd (params proc)
      put oldStoreEnv
