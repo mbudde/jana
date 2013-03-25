@@ -1,5 +1,6 @@
 /dist
 src/Main
+src/Jana/Parser
 *.hi
 *.o
 *.egg-info

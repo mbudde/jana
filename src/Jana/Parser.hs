@@ -1,58 +1,286 @@
-module Jana.Parser where
+module Jana.Parser (
+    parseString, parseFile,
+    cmpParse,
+    ) where
 
-import Text.Parsec
-import Text.Parsec.String (Parser)
-import qualified Text.Parsec.Token as T
+import Prelude hiding (GT, LT, EQ)
+import Control.Monad (liftM, liftM2)
+import Data.Either (partitionEithers)
+
+import Text.Parsec hiding (Empty)
+import Text.Parsec.String
+import Text.Parsec.Expr
+import qualified Text.Parsec.Token as Token
 
 import Jana.Ast
 
+janaDef = Token.LanguageDef {
+                Token.commentStart     = "/*"
+              , Token.commentEnd       = "*/"
+              , Token.commentLine      = "//"
+              , Token.nestedComments   = False
+              , Token.identStart       = letter
+              , Token.identLetter      = alphaNum
+              , Token.opStart          = oneOf ""
+              , Token.opLetter         = oneOf ""
+              , Token.reservedOpNames  = []
+              , Token.reservedNames    = [ "procedure"
+                                         , "int"
+                                         , "stack"
+                                         , "if"
+                                         , "then"
+                                         , "else"
+                                         , "fi"
+                                         , "from"
+                                         , "do"
+                                         , "loop"
+                                         , "until"
+                                         , "push"
+                                         , "pop"
+                                         , "local"
+                                         , "delocal"
+                                         , "call"
+                                         , "uncall"
+                                         , "skip"
+                                         , "empty"
+                                         , "top"
+                                         , "nil"
+                                         ]
+              , Token.caseSensitive    = True
+  }
 
-janusDef :: T.LanguageDef st
-janusDef = T.LanguageDef
-    { T.commentStart    = ""
-    , T.commentEnd      = ""
-    , T.commentLine     = "#"
-    , T.nestedComments  = True
-    , T.identStart      = letter <|> char '_'
-    , T.identLetter     = alphaNum <|> oneOf "_-"
-    , T.opStart         = T.opLetter janusDef
-    , T.opLetter        = oneOf "+-*/%&|<=>^"
-    , T.reservedOpNames = []
-    , T.reservedNames   = []
-    , T.caseSensitive   = True
-    }
+lexer = Token.makeTokenParser janaDef
 
-varType :: Parser Type
-varType =
-        (reserved "int" >> return Int)
-    <|> (reserved "stack" >> return Stack)
+identifier = Token.identifier lexer -- parses an identifier
+reserved   = Token.reserved   lexer -- parses a reserved name
+reservedOp = Token.reservedOp lexer -- parses an operator
+parens     = Token.parens     lexer -- parses surrounding parenthesis:
+                                    -- parens p
+                                    -- takes care of the parenthesis and
+                                    -- uses p to parse what's inside them
+brackets   = Token.brackets   lexer -- parses brackets
+integer    = Token.integer    lexer -- parses an integer
+semi       = Token.semi       lexer -- parses a semicolon
+comma      = Token.comma      lexer -- parses a comma
+whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
-param :: Parser (Type, Ident)
-param = do
-    parType <- varType
-    parName <- ident
-    return (parType, parName)
+program :: Parser Program
+program =
+  do whiteSpace
+     ([main], procs) <- liftM partitionEithers (many genProcedure)
+     return (main, procs)
 
-paramList :: Parser [(Type, Ident)]
-paramList = commaSep param
+genProcedure :: Parser (Either ProcMain Proc)
+genProcedure =   try (liftM Left mainProcedure)
+             <|> liftM Right procedure
 
-proc :: Parser Proc
-proc = do
-    reserved "procedure"
-    name <- ident
-    ps   <- parens paramList
-    return Proc { procname = name, params = ps, body = [] }
+mainProcedure :: Parser ProcMain
+mainProcedure =
+  do reserved "procedure"
+     reserved "main"
+     parens whiteSpace
+     vdecls <- many vdecl
+     stats  <- many1 statement
+     return $ ProcMain vdecls stats
+     
+vdecl :: Parser Vdecl
+vdecl =
+  do mytype <- atype
+     ident  <- identifier
+     if mytype == Int
+       then     liftM (Array ident) (brackets integer)
+            <|> return (Scalar mytype ident)
+       else return $ Scalar mytype ident
+     
+procedure :: Parser Proc
+procedure = 
+  do reserved "procedure"
+     name   <- identifier
+     params <- parens $ sepBy parameter comma
+     stats  <- many1 statement
+     return Proc { procname = name, params = params, body = stats }
 
-parserTest =
-    case (parse proc "" "procedure foo(int x)") of
-        Left err -> error $ show err
-        Right p  -> print p
+parameter :: Parser (Type, Ident)
+parameter =
+  do mytype <- atype
+     ident  <- identifier
+     return (mytype, ident)
+
+statement :: Parser Stmt
+statement =   try assignStmt
+          <|> ifStmt
+          <|> fromStmt
+          <|> pushStmt
+          <|> popStmt
+          <|> localStmt
+          <|> callStmt
+          <|> uncallStmt
+          <|> try swapStmt
+          <|> skipStmt
+          <?> "statement"
+
+assignStmt :: Parser Stmt
+assignStmt =
+  do lval  <- lval
+     modop <- modOp
+     expr  <- expression
+     return $ Assign modop lval expr
+
+modOp :: Parser ModOp
+modOp =   (reservedOp "+=" >> return AddEq)
+      <|> (reservedOp "-=" >> return SubEq)
+      <|> (reservedOp "^=" >> return XorEq)
+
+ifStmt :: Parser Stmt
+ifStmt =
+  do reserved "if"
+     entrycond <- expression
+     reserved "then"
+     stats1    <- many1 statement
+     stats2    <- option [] $ reserved "else" >> many1 statement
+     reserved "fi"
+     exitcond  <- expression
+     return $ If entrycond stats1 stats2 exitcond
+
+fromStmt :: Parser Stmt
+fromStmt =
+  do reserved "from"
+     entrycond <- expression
+     stats1    <- option [] $ reserved "do"   >> many1 statement
+     stats2    <- option [] $ reserved "loop" >> many1 statement
+     reserved "until"
+     exitcond  <- expression
+     return $ From entrycond stats1 stats2 exitcond
+
+pushStmt :: Parser Stmt
+pushStmt =
+  do reserved "push"
+     (x,y) <- parens twoArgs
+     return $ Push x y
+
+popStmt :: Parser Stmt
+popStmt =
+  do reserved "pop"
+     (x,y) <- parens twoArgs
+     return $ Pop x y
+
+twoArgs :: Parser (Ident, Ident)
+twoArgs =
+  do x <- identifier
+     comma
+     y <- identifier
+     return (x,y)
 
 
--- Lexer
-lexer = T.makeTokenParser janusDef
+localStmt :: Parser Stmt
+localStmt =
+  do reserved "local"
+     type1  <- atype
+     ident1 <- identifier
+     reservedOp "="
+     expr1  <- expression
+     stats  <- many1 statement
+     reserved "delocal"
+     type2  <- atype
+     ident2 <- identifier
+     reservedOp "="
+     expr2  <- expression
+     return $ Local (type1, ident1, expr1) stats (type2, ident2, expr2)
 
-ident    = T.identifier lexer
-reserved = T.reserved lexer
-parens   = T.parens lexer
-commaSep = T.commaSep lexer
+atype :: Parser Type
+atype =   (reserved "int"   >> return Int)
+      <|> (reserved "stack" >> return Stack)
+
+callStmt :: Parser Stmt
+callStmt =
+  do reserved "call"
+     procname <- identifier
+     args     <- parens $ sepBy identifier comma
+     return $ Call procname args
+
+uncallStmt :: Parser Stmt
+uncallStmt =
+  do reserved "uncall"
+     procname <- identifier
+     args     <- parens $ sepBy identifier comma
+     return $ Uncall procname args
+
+swapStmt :: Parser Stmt
+swapStmt =
+  do ident1 <- identifier
+     reservedOp "<=>"
+     ident2 <- identifier
+     return $ Swap ident1 ident2
+
+skipStmt :: Parser Stmt
+skipStmt = reserved "skip" >> return Skip
+
+expression :: Parser Expr
+expression = buildExpressionParser binOperators term
+
+term :: Parser Expr
+term =   parens expression
+     <|> numberExpr
+     <|> lvalExpr
+     <|> emptyExpr
+     <|> topExpr
+     <|> nilExpr
+     <?> "expression"
+
+numberExpr :: Parser Expr
+numberExpr = liftM Number integer
+
+lvalExpr :: Parser Expr
+lvalExpr = liftM LV lval
+
+lval ::  Parser Lval
+lval =   try lookUp
+     <|> liftM Var identifier
+
+nilExpr :: Parser Expr
+nilExpr = reserved "nil" >> return Nil
+
+lookUp :: Parser Lval
+lookUp = liftM2 Lookup identifier (brackets expression)
+
+emptyExpr :: Parser Expr
+emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
+
+topExpr :: Parser Expr
+topExpr = reserved "top" >> liftM Top (parens identifier)
+
+binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
+                 , Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft
+                 , Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft ]
+               , [ Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft
+                 , Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft ]
+               , [ Infix (reservedOp "<"   >> return (BinOp LT  )) AssocLeft
+                 , Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft
+                 , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
+                 , Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft
+                 , Infix (reservedOp "="   >> return (BinOp EQ  )) AssocLeft
+                 , Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft ]
+               , [ Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft
+                 , Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft
+                 , Infix (reservedOp "|"   >> return (BinOp Or  )) AssocLeft ]
+               , [ Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft
+                 , Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft ]
+               ]
+
+
+parseString :: String -> Program
+parseString str =
+  case parse (program) "" str of
+    Left e  -> error $ show e
+    Right r -> r
+
+parseFile :: String -> IO Program
+parseFile file =
+  do str <- readFile file
+     case parse program "" str of
+       Left e  -> print e >> fail "parse error"
+       Right r -> return r
+
+cmpParse file p2 =
+  do p <- parseFile file
+     print (if p == p2 then "Equal!" else "Not equal!")
