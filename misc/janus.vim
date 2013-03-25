@@ -21,7 +21,9 @@ syn match   janusProcedure "\w\+" contained
 
 syn match   janusNumber	"\<\%([1-9]\d*\|0\)\>"
 
-syn match   janusComment "//.*$"
+syn keyword janusCommentTodo   TODO FIXME XXX TBD contained
+syn match   janusLineComment   "\/\/.*" contains=janusCommentTodo
+syn region  janusComment       start="/\*" end="\*/" contains=janusCommentTodo
 
 
 hi def link janusNumber         Number
@@ -33,6 +35,8 @@ hi def link janusOperator       Operator
 hi def link janusKeyword        Keyword
 hi def link janusType           Type
 hi def link janusComment        Comment
+hi def link janusLineComment    Comment
+hi def link janusCommentTodo    Todo
 
 
 let b:current_syntax = "janus"
