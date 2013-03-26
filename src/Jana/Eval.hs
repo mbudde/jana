@@ -17,6 +17,7 @@ import Text.Printf (printf)
 
 import Jana.Ast
 import Jana.Types
+import Jana.Invert
 import Jana.Parser (parseExprString, parseStmtsString)
 
 
@@ -173,7 +174,8 @@ evalStmt (Call funId args) =
   do proc <- getProc funId
      evalProc proc args
 evalStmt (Uncall funId args) =
-  undefined
+  do proc <- getProc funId
+     evalProc (invertProc proc) args
 evalStmt (Swap id1 id2) =
   do val1 <- getVar id1
      val2 <- getVar id2

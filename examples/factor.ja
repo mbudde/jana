@@ -33,7 +33,7 @@ procedure factor(int num, int try, int z, int i, int fact)
 
     if (fact[i-1] * fact[i-1]) < fact[i] then  // Zero try
         from (try*try) > fact[i] loop
-            call nexttrybwd(try)               // FIXME: change when uncall is implemented
+            uncall nexttry(try)
 	    until try = 0
     else
         try -= fact[i-1]
@@ -51,13 +51,6 @@ procedure nexttry(int try)
     if try = 4 then
         try -= 1
     fi try = 3
-
-// FIXME: remove when uncall is implemented
-procedure nexttrybwd(int try)
-    if try = 3 then
-        try += 1
-    fi try = 4
-    try -= 2
 
 procedure main()
     int num      // Number to factor.  Ends up zero
