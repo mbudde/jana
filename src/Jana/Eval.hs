@@ -132,7 +132,7 @@ evalStmt (From e1 s1 s2 e2) =
      evalStmts s1
      loop
   where loop = do val <- evalExpr e2
-                  unless (truth val) loopRec 
+                  unless (truthy val) loopRec
         loopRec = do evalStmts s2
                      assertFalse e1
                      evalStmts s1
