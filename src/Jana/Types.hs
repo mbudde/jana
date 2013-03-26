@@ -20,6 +20,8 @@ import Text.Printf (printf)
 import qualified Data.Maybe as Maybe
 import qualified Data.Map as Map
 
+import Text.Parsec.Pos
+
 import Jana.Ast
 
 type Array = [Integer]
@@ -101,8 +103,8 @@ type Store = Map.Map Ident Value
 
 showStore :: Store -> String
 showStore store = intercalate "\n" (map printVdecl (Map.toList store))
-  where printVdecl (name, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
-        printVdecl (name, val) = printf "%s = %s" name (show val)
+  where printVdecl (Ident name _, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
+        printVdecl (Ident name _, val) = printf "%s = %s" name (show val)
 
 emptyStore = Map.empty
 
@@ -164,36 +166,40 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
     {- e >>= f = S -}
 
 
-data JError       -- FIXME: Add source pos
-  = UnboundVar    String           -- ident
-  | AlreadyBound  String           -- ident
-  | TypeError     String           -- message
-  | TypeMismatch  String String    -- expected-type found-type
-  | OutOfBounds
-  | EmptyStack
-  | AssertionFail String
-  | UndefProc     String           -- ident
-  | ArgumentError String Int Int   -- proc-name expected got
-  | ArraySize
-  | Unknown       String           -- message
+data JError
+  = UnboundVar    String SourcePos          -- ident
+  | AlreadyBound  String SourcePos          -- ident
+  | TypeError     String SourcePos          -- message
+  | TypeMismatch  String String SourcePos   -- expected-type found-type
+  | OutOfBounds   SourcePos
+  | EmptyStack    SourcePos
+  | AssertionFail String SourcePos
+  | UndefProc     String SourcePos          -- ident
+  | ArgumentError String Int Int SourcePos  -- proc-name expected got
+  | ArraySize     SourcePos
+  | Unknown       String SourcePos          -- message
 
 instance Show JError where
-  show (UnboundVar name) =
-    "variable not declared: " ++ name
-  show (AlreadyBound name) =
-    "variable name is already bound: " ++ name
-  show (TypeError s)     = s
-  show (TypeMismatch expType foundType) =
-    "expected type " ++ expType ++ " but got " ++ foundType
-  show (OutOfBounds)     = "array lookup was out of bounds"
-  show (EmptyStack)      = "cannot pop from empty stack"
-  show (AssertionFail s) = "assertion failed: " ++ s
-  show (UndefProc name)  = printf "procedure '%s' is not defined" name
-  show (ArgumentError name exp got) =
-    printf "procedure '%s' expects %d argument(s) but got %d"
-           name exp got
-  show (ArraySize)       = "array size must be greater than or equal to one"
-  show (Unknown s)       = "unknown error: " ++ s
+  show (UnboundVar name pos) =
+    jErrorMsg pos $ "variable not declared: " ++ name ++ "line: "
+  show (AlreadyBound name pos) =
+    jErrorMsg pos $ "variable name is already bound: " ++ name
+  show (TypeError s pos)     = s
+  show (TypeMismatch expType foundType pos) =
+    jErrorMsg pos $ "expected type " ++ expType ++ " but got " ++ foundType
+  show (OutOfBounds pos)     = jErrorMsg pos $ "array lookup was out of bounds"
+  show (EmptyStack pos)      = jErrorMsg pos $ "cannot pop from empty stack"
+  show (AssertionFail s pos) = jErrorMsg pos $ "assertion failed: " ++ s
+  show (UndefProc name pos)  = jErrorMsg pos $ printf "procedure '%s' is not defined" name
+  show (ArgumentError name exp got pos) =
+   jErrorMsg pos $  printf "procedure '%s' expects %d argument(s) but got %d"
+                           name exp got
+  show (ArraySize pos) = jErrorMsg pos $ "array size must be greater than or equal to one"
+  show (Unknown s pos) = jErrorMsg pos $ "unknown error: " ++ s
+
+jErrorMsg :: SourcePos -> String -> String
+jErrorMsg pos str = 
+  printf "File \"%s\" in line %d, column %d:\n  %s" (sourceName pos) (sourceLine pos) (sourceColumn pos) str
 
 instance Error JError where
   noMsg  = Unknown "Unknown error"
