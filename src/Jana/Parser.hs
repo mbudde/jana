@@ -260,9 +260,9 @@ binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                  , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
                  , Infix (reservedOp "="   >> return (BinOp EQ  )) AssocLeft
                  , Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft ]
-               , [ Infix (reservedOp "&"   >> return (BinOp And )) AssocLeft
-                 , Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft
-                 , Infix (reservedOp "|"   >> return (BinOp Or  )) AssocLeft ]
+               , [ Infix (try $ reservedOp "&" >> lookAhead (noneOf "&") >> return (BinOp And)) AssocLeft
+                 , Infix (try $ reservedOp "|" >> lookAhead (noneOf "|") >> return (BinOp Or )) AssocLeft
+                 , Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft ]
                , [ Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft
                  , Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft ]
                ]
