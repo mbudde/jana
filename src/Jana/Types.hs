@@ -6,7 +6,7 @@ module Jana.Types (
     showValueType, typesMatch, truthy,
     JError(..),
     Store, showStore, emptyStore, bindVar, setVar, getVar,
-    ProcEnv, emptyProcEnv, procEnvFromList, bindProc, getProc,
+    ProcEnv, emptyProcEnv, procEnvFromList, getProc,
     Eval, runEval,
     ) where
 
@@ -81,15 +81,15 @@ opFunc NEQ  = boolToInt (/=)
 opFunc GE   = boolToInt (>=)
 opFunc LE   = boolToInt (<=)
 
-performOperation :: BinOp -> Value -> Value -> Eval Value
-performOperation op (JInt x) (JInt y) =
+performOperation :: BinOp -> Value -> Value -> SourcePos -> Eval Value
+performOperation op (JInt x) (JInt y) _ =
   return $ JInt $ opFunc op x y
-performOperation _ (JInt _) val =
-  throwError $ TypeMismatch "int" (showValueType val)
-performOperation _ val _ =
-  throwError $ TypeMismatch "int" (showValueType val)
+performOperation _ (JInt _) val pos =
+  throwError $ TypeMismatch "int" (showValueType val) pos
+performOperation _ val _ pos =
+  throwError $ TypeMismatch "int" (showValueType val) pos
 
-performModOperation :: ModOp -> Value -> Value -> Eval Value
+performModOperation :: ModOp -> Value -> Value -> SourcePos -> Eval Value
 performModOperation modOp = performOperation $ modOpToBinOp modOp
   where modOpToBinOp AddEq = Add
         modOpToBinOp SubEq = Sub
@@ -99,55 +99,54 @@ performModOperation modOp = performOperation $ modOpToBinOp modOp
 -- Environment
 --
 
-type Store = Map.Map Ident Value
+type Store = Map.Map String Value
 
 showStore :: Store -> String
 showStore store = intercalate "\n" (map printVdecl (Map.toList store))
-  where printVdecl (Ident name _, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
-        printVdecl (Ident name _, val) = printf "%s = %s" name (show val)
+  where printVdecl (name, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
+        printVdecl (name, val) = printf "%s = %s" name (show val)
 
 emptyStore = Map.empty
 
-envFromList :: [(Ident, Value)] -> Store
+envFromList :: [(String, Value)] -> Store
 envFromList = Map.fromList
 
 bindVar :: Ident -> Value -> Eval ()
-bindVar id val =
+bindVar (Ident name pos) val =
   do storeEnv <- get
-     case Map.lookup id storeEnv of
-       Nothing  -> put $ Map.insert id val storeEnv
-       Just val -> throwError $ AlreadyBound id
+     case Map.lookup name storeEnv of
+       Nothing  -> put $ Map.insert name val storeEnv
+       Just _ -> throwError $ AlreadyBound name pos
 
 setVar :: Ident -> Value -> Eval ()
-setVar id val = modify $ Map.insert id val
+setVar (Ident name _) val = modify $ Map.insert name val
 
 getVar :: Ident -> Eval Value
-getVar id =
+getVar (Ident name pos) =
   do storeEnv <- get
-     case Map.lookup id storeEnv of
+     case Map.lookup name storeEnv of
        Just val -> return val
-       Nothing  -> throwError $ UnboundVar id
+       Nothing  -> throwError $ UnboundVar name pos
 
 
-type ProcEnv = Map.Map Ident Proc
+type ProcEnv = Map.Map String Proc
 
 emptyProcEnv = Map.empty
 
-procEnvFromList :: [Proc] -> ProcEnv
-procEnvFromList = Map.fromList . map (\p -> (procname p, p))
-
-bindProc :: Ident -> Proc -> ProcEnv -> ProcEnv
-bindProc name proc env
-  = if Map.notMember name env
-      then Map.insert name proc env
-      else error "function already defined"
+procEnvFromList :: [Proc] -> Either JError ProcEnv
+procEnvFromList = foldM insertProc emptyProcEnv
+  where insertProc env p = if Map.notMember (pname p) env
+                             then return $ Map.insert (pname p) p env
+                             else throwError $ ProcDefined (pname p) (ppos p)
+        pname Proc { procname = (Ident name _) } = name
+        ppos  Proc { procname = (Ident _ pos) } = pos
 
 getProc :: Ident -> Eval Proc
-getProc funId =      -- FIXME: calling main?
+getProc (Ident funName pos) =      -- FIXME: calling main?
   do procEnv <- ask
-     case Map.lookup funId procEnv of
+     case Map.lookup funName procEnv of
        Just proc -> return proc
-       Nothing   -> throwError $ UndefProc funId
+       Nothing   -> throwError $ UndefProc funName pos
 
 
 --
@@ -175,9 +174,10 @@ data JError
   | EmptyStack    SourcePos
   | AssertionFail String SourcePos
   | UndefProc     String SourcePos          -- ident
+  | ProcDefined   String SourcePos
   | ArgumentError String Int Int SourcePos  -- proc-name expected got
   | ArraySize     SourcePos
-  | Unknown       String SourcePos          -- message
+  | Unknown       String                    -- message
 
 instance Show JError where
   show (UnboundVar name pos) =
@@ -187,15 +187,16 @@ instance Show JError where
   show (TypeError s pos)     = s
   show (TypeMismatch expType foundType pos) =
     jErrorMsg pos $ "expected type " ++ expType ++ " but got " ++ foundType
-  show (OutOfBounds pos)     = jErrorMsg pos $ "array lookup was out of bounds"
-  show (EmptyStack pos)      = jErrorMsg pos $ "cannot pop from empty stack"
-  show (AssertionFail s pos) = jErrorMsg pos $ "assertion failed: " ++ s
-  show (UndefProc name pos)  = jErrorMsg pos $ printf "procedure '%s' is not defined" name
+  show (OutOfBounds pos)      = jErrorMsg pos $ "array lookup was out of bounds"
+  show (EmptyStack pos)       = jErrorMsg pos $ "cannot pop from empty stack"
+  show (AssertionFail s pos)  = jErrorMsg pos $ "assertion failed: " ++ s
+  show (UndefProc name pos)   = jErrorMsg pos $ printf "procedure `%s' is not defined" name
+  show (ProcDefined name pos) = jErrorMsg pos $ printf "procedure `%s' is already defined" name
   show (ArgumentError name exp got pos) =
    jErrorMsg pos $  printf "procedure '%s' expects %d argument(s) but got %d"
                            name exp got
   show (ArraySize pos) = jErrorMsg pos $ "array size must be greater than or equal to one"
-  show (Unknown s pos) = jErrorMsg pos $ "unknown error: " ++ s
+  show (Unknown s)     = "unknown error: " ++ s
 
 jErrorMsg :: SourcePos -> String -> String
 jErrorMsg pos str = 

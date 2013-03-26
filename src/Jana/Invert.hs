@@ -4,7 +4,7 @@ import Jana.Ast
 
 
 invertMain :: ProcMain -> ProcMain
-invertMain (ProcMain vdecls body) = ProcMain vdecls (invertStmts body)
+invertMain (ProcMain vdecls body pos) = ProcMain vdecls (invertStmts body) pos
 
 invertProc :: Proc -> Proc
 invertProc proc = proc { body = invertStmts $ body proc }
@@ -13,23 +13,23 @@ invertStmts :: [Stmt] -> [Stmt]
 invertStmts = reverse . map invertStmt
 
 invertStmt :: Stmt -> Stmt
-invertStmt (Assign modOp lval expr) =
-  Assign (invertModOp modOp) lval expr
+invertStmt (Assign modOp lval expr pos) =
+  Assign (invertModOp modOp) lval expr pos
   where invertModOp AddEq = SubEq
         invertModOp SubEq = AddEq
         invertModOp XorEq = XorEq
-invertStmt (If e1 ifPart elsePart e2) =
-  If e2 (invertStmts ifPart) (invertStmts elsePart) e1
-invertStmt (From e1 doPart loopPart e2) =
-  From e2 (invertStmts doPart) (invertStmts loopPart) e1
-invertStmt (Push id1 id2) = Pop  id1 id2
-invertStmt (Pop  id1 id2) = Push id1 id2
-invertStmt (Local assign1 body assign2) =
-  Local assign2 (invertStmts body) assign1
-invertStmt (Call funId args) =
-  Uncall funId args
-invertStmt (Uncall funId args) =
-  Call funId args
-invertStmt stmt@(Swap _ _) = stmt
-invertStmt Skip = Skip
+invertStmt (If e1 ifPart elsePart e2 pos) =
+  If e2 (invertStmts ifPart) (invertStmts elsePart) e1 pos
+invertStmt (From e1 doPart loopPart e2 pos) =
+  From e2 (invertStmts doPart) (invertStmts loopPart) e1 pos
+invertStmt (Push id1 id2 pos) = Pop  id1 id2 pos
+invertStmt (Pop  id1 id2 pos) = Push id1 id2 pos
+invertStmt (Local assign1 body assign2 pos) =
+  Local assign2 (invertStmts body) assign1 pos
+invertStmt (Call funId args pos) =
+  Uncall funId args pos
+invertStmt (Uncall funId args pos) =
+  Call funId args pos
+invertStmt stmt@(Swap _ _ _) = stmt
+invertStmt (Skip pos) = Skip pos
 

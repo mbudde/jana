@@ -15,6 +15,8 @@ import Control.Monad.State
 import Control.Monad.Error
 import Text.Printf (printf)
 
+import Text.Parsec.Pos
+
 import Jana.Ast
 import Jana.Types
 import Jana.Invert
@@ -102,17 +104,17 @@ evalProc proc args =
         gotArgs = length args
 
 
-assignLval :: ModOp -> Lval -> Expr -> Eval ()
-assignLval modOp (Var id) expr =
+assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
+assignLval modOp (Var id) expr pos =
   do exprVal <- evalExpr expr
      varVal  <- getVar id
-     performModOperation modOp varVal exprVal >>= setVar id
-assignLval modOp (Lookup id idxExpr) expr =
+     performModOperation modOp varVal exprVal pos >>= setVar id
+assignLval modOp (Lookup id idxExpr) expr pos =
   do idx    <- unpackInt =<< evalExpr idxExpr
      arr    <- unpackArray =<< getVar id
      val    <- evalExpr expr
      oldval <- arrayLookup arr idx
-     newval <- unpackInt =<< performModOperation modOp oldval val
+     newval <- unpackInt =<< performModOperation modOp oldval val pos
      setVar id $ JArray $ arrayModify arr idx newval
 
 evalStmts :: [Stmt] -> Eval ()
