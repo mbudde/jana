@@ -269,7 +269,7 @@ binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
 
 parseString :: Parser a -> String -> a
 parseString parser str =
-  case parse (parser) "" str of
+  case parse parser "" str of
     Left e  -> error $ show e
     Right r -> r
 

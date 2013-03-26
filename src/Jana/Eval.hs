@@ -36,9 +36,8 @@ unpackStack val = throwError $ TypeMismatch "stack" (showValueType val)
 assert :: Bool -> Expr -> Eval ()
 assert bool expr =
   do val1 <- evalExpr expr
-     if truthy val1 == bool
-       then return ()
-       else throwError $ AssertionFail $ "should be " ++ show bool
+     unless (truthy val1 == bool) $
+       throwError $ AssertionFail $ "should be " ++ show bool
 
 assertTrue = assert True
 assertFalse = assert False
@@ -89,16 +88,16 @@ evalProc proc args =
      put emptyStore
      bindArgs (params proc) values
      evalStmts $ body proc
-     newValues <- mapM getVar $ map snd (params proc)
+     newValues <- mapM (getVar . snd) (params proc)
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
   where bindArg :: (Type, Ident) -> Value -> Eval ()
         bindArg (typ, id) val = checkType typ val >> setVar id val
         bindArgs params values =
-          do if expArgs /= gotArgs
-               then throwError $ ArgumentError (procname proc)
-                                               expArgs gotArgs
-               else mapM_ (uncurry bindArg) (zip params values)
+          if expArgs /= gotArgs
+            then throwError $ ArgumentError (procname proc)
+                                            expArgs gotArgs
+            else mapM_ (uncurry bindArg) (zip params values)
         expArgs = length (params proc)
         gotArgs = length args
 
@@ -133,9 +132,7 @@ evalStmt (From e1 s1 s2 e2) =
      evalStmts s1
      loop
   where loop = do val <- evalExpr e2
-                  if truthy val
-                    then return ()
-                    else loopRec
+                  unless (truth val) loopRec 
         loopRec = do evalStmts s2
                      assertFalse e1
                      evalStmts s1
@@ -165,11 +162,10 @@ evalStmt (Local assign1 stmts assign2) =
         assertBinding (_, id, expr) =   -- XXX: check type?
           do val <- evalExpr expr
              val' <- getVar id
-             if val == val'
-               then return ()
-               else throwError $ AssertionFail $
-                      printf "'%s' has the value '%s' not '%s'"
-                             id (show val') (show val)
+             unless (val == val') $
+               throwError $ AssertionFail $
+                 printf "'%s' has the value '%s' not '%s'"
+                        id (show val') (show val)
 evalStmt (Call funId args) =
   do proc <- getProc funId
      evalProc proc args
