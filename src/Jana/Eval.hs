@@ -196,6 +196,20 @@ evalExpr :: Expr -> Eval Value
 evalExpr (Number x) = return $ JInt x
 evalExpr Nil        = return nil
 evalExpr (LV lval)  = evalLval lval
+evalExpr (BinOp LAnd e1 e2) =
+  do x <- evalExpr e1
+     if truthy x
+       then do y <- evalExpr e2
+               if truthy y then return $ JInt 1
+                           else return $ JInt 0
+       else return $ JInt 0
+evalExpr (BinOp LOr e1 e2) =
+  do x <- evalExpr e1
+     if truthy x
+       then return $ JInt 1
+       else do y <- evalExpr e2
+               if truthy y then return $ JInt 1
+                           else return $ JInt 0
 evalExpr (BinOp op e1 e2) =
   do x <- evalExpr e1
      y <- evalExpr e2

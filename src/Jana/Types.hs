@@ -70,8 +70,8 @@ opFunc Mod  = mod
 opFunc And  = (.&.)
 opFunc Or   = (.|.)
 opFunc Xor  = xor
-opFunc LAnd = undefined
-opFunc LOr  = undefined
+opFunc LAnd = undefined -- handled by evalExpr
+opFunc LOr  = undefined -- handled by evalExpr
 opFunc GT   = boolToInt (>)
 opFunc LT   = boolToInt (<)
 opFunc EQ   = boolToInt (==)
