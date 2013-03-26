@@ -5,12 +5,14 @@ import Text.Parsec.Pos
 
 -- Data types
 data Type
-    = Int
-    | Stack
+    = Int SourcePos
+    | Stack SourcePos
     deriving (Eq, Show)
 
 -- Identifier
-type Ident = String
+data Ident =
+  Ident String SourcePos
+  deriving (Eq, Show)
 
 -- Left-value
 data Lval

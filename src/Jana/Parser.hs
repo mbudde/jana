@@ -52,7 +52,7 @@ janaDef = Token.LanguageDef {
 
 lexer = Token.makeTokenParser janaDef
 
-identifier = Token.identifier lexer -- parses an identifier
+t_identifier = Token.identifier lexer -- parses an identifier
 reserved   = Token.reserved   lexer -- parses a reserved name
 reservedOp = Token.reservedOp lexer -- parses an operator
 parens     = Token.parens     lexer -- parses surrounding parenthesis:
@@ -64,6 +64,12 @@ integer    = Token.integer    lexer -- parses an integer
 semi       = Token.semi       lexer -- parses a semicolon
 comma      = Token.comma      lexer -- parses a comma
 whiteSpace = Token.whiteSpace lexer -- parses whitespace
+
+identifier :: Parser Ident
+identifier =
+  do ident <- t_identifier
+     pos   <- getPosition
+     return $ Ident ident pos
 
 program :: Parser Program
 program =
@@ -90,7 +96,7 @@ vdecl =
   do mytype <- atype
      ident  <- identifier
      pos    <- getPosition
-     if mytype == Int
+     if mytype == Int pos
        then     liftM2 (Array ident) (brackets integer) getPosition
             <|> return (Scalar mytype ident pos)
        else return $ Scalar mytype ident pos
@@ -198,8 +204,8 @@ localStmt =
      return $ Local (type1, ident1, expr1) stats (type2, ident2, expr2) pos
 
 atype :: Parser Type
-atype =   (reserved "int"   >> return Int)
-      <|> (reserved "stack" >> return Stack)
+atype =   (reserved "int"   >> liftM Int getPosition)
+      <|> (reserved "stack" >> liftM Stack getPosition)
 
 callStmt :: Parser Stmt
 callStmt =
