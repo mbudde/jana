@@ -74,4 +74,4 @@ data Proc
            }
     deriving (Eq, Show)
 
-type Program = (ProcMain, [Proc])
+type Program = ([ProcMain], [Proc])

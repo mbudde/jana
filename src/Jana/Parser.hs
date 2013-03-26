@@ -67,8 +67,8 @@ whiteSpace = Token.whiteSpace lexer -- parses whitespace
 program :: Parser Program
 program =
   do whiteSpace
-     ([main], procs) <- liftM partitionEithers (many genProcedure)
-     return (main, procs)
+     (mains, procs) <- liftM partitionEithers (many genProcedure)
+     return (mains, procs)
 
 genProcedure :: Parser (Either ProcMain Proc)
 genProcedure =   try (liftM Left mainProcedure)

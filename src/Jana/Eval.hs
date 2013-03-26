@@ -64,10 +64,14 @@ arrayModify arr idx val = xs ++ val : ys
 
 
 runProgram :: Program -> IO ()
-runProgram (main, procs) =
+runProgram ([main], procs) =
   case runEval (evalMain main) emptyStore (procEnvFromList procs) of
     Right (_, s) -> putStrLn $ showStore s
     Left err     -> print err
+runProgram ([], _) =
+  print $ Unknown "no main procedure defined"
+runProgram (_, _) =
+  print $ Unknown "multiple main procedures defined"
 
 
 evalMain :: ProcMain -> Eval ()
