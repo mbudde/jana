@@ -1,6 +1,6 @@
 // David Gries: The science of programming, 1987. pp.270
 
-procedure permtocode(int k, int j, int x)
+procedure perm_to_code(int k, int j, int x)
     from k = 6
         loop k -= 1
             from j = 0
@@ -27,4 +27,4 @@ procedure main()
     x[4] += 5
     x[5] += 4
     k += 6
-    call permtocode(k, j, x)
+    call perm_to_code(k, j, x)
