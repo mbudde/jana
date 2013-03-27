@@ -1,0 +1,40 @@
+// Calculating a square root of an integer
+// C. Lutz and H. Derby.
+// Janus: a time-reversible language. A letter to Landauer.
+// Available at http://www.cise.ufl.edu/%7Empf/rc/janus.html,
+// 1982.
+
+// Operator names are different from the original program.
+// #,  ===> !=, %
+
+procedure root(int num, int root)      // root := floor (sqrt(num))
+    local int bit = 1
+        from bit = 1 loop  // find exponential ball park
+            call doublebit(bit)
+        until (bit * bit) > num
+
+        from (bit * bit) > num do
+            uncall doublebit(bit)
+            if ((root + bit) * (root + bit)) <= num then
+                root += bit
+            fi (root / bit) % 2 != 0
+        until bit = 1
+    delocal int bit = 1
+    num -= root * root
+
+procedure doublebit(int bit)
+    local int z = bit
+        bit += z
+    delocal int z = bit / 2
+
+procedure main()
+    int num
+    int root
+
+    num += 66
+    call root(num, root)
+
+    /*
+    root += 25
+    uncall root(num, root)
+    */
