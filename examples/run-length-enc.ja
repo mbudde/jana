@@ -1,0 +1,43 @@
+// run-length encoding
+
+procedure encode(int text, int arc)
+    local int i = 0
+    local int j = 0
+        from i = 0 && j = 0 loop
+            arc[j] += text[i] // arc[j] <=> text[i]
+            text[i]-=arc[j]
+            from arc[j+1] = 0 do
+                arc[j+1] += 1
+                i += 1
+            loop
+                text[i] -= arc[j]
+            until arc[j] != text[i]
+            j += 2
+        until text[i] = 0
+
+        // i & j should be cleared
+        from arc[j] = 0 do
+            j -= 2
+            i -= arc[j+1]
+        until i = 0
+    delocal int i = 0
+    delocal int j = 0
+
+procedure main()
+    int text[7]
+    int arc[14]
+
+    text[0] += 1
+    text[1] += 1
+    text[2] += 2
+    text[3] += 2
+    text[4] += 2
+    text[5] += 1
+    /*
+    text[0] += 2
+    text[1] += 2
+    text[2] += 2
+    text[3] += 2
+    text[4] += 2
+    */
+    call encode(text, arc)
