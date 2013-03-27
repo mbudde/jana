@@ -249,23 +249,31 @@ emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
 topExpr :: Parser Expr
 topExpr = reserved "top" >> liftM Top (parens identifier)
 
-binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
-                 , Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft
-                 , Infix (reservedOp "%"   >> return (BinOp Mod )) AssocLeft ]
-               , [ Infix (reservedOp "+"   >> return (BinOp Add )) AssocLeft
-                 , Infix (reservedOp "-"   >> return (BinOp Sub )) AssocLeft ]
-               , [ Infix (reservedOp "<="  >> return (BinOp LE  )) AssocLeft
-                 , Infix (reservedOp "<"   >> return (BinOp LT  )) AssocLeft
-                 , Infix (reservedOp ">="  >> return (BinOp GE  )) AssocLeft
-                 , Infix (reservedOp ">"   >> return (BinOp GT  )) AssocLeft
-                 , Infix (reservedOp "="   >> return (BinOp EQ  )) AssocLeft
-                 , Infix (reservedOp "!="  >> return (BinOp NEQ )) AssocLeft ]
-               , [ Infix (try $ reservedOp "&" >> lookAhead (noneOf "&") >> return (BinOp And)) AssocLeft
-                 , Infix (try $ reservedOp "|" >> lookAhead (noneOf "|") >> return (BinOp Or )) AssocLeft
-                 , Infix (reservedOp "^"   >> return (BinOp Xor )) AssocLeft ]
-               , [ Infix (reservedOp "&&"  >> return (BinOp LAnd)) AssocLeft
-                 , Infix (reservedOp "||"  >> return (BinOp LOr )) AssocLeft ]
+binOperators = [ [ binop  "*"   Mul
+                 , binop  "/"   Div
+                 , binop  "%"   Mod
+                 ]
+               , [ binop  "+"   Add
+                 , binop  "-"   Sub
+                 ]
+               , [ binop  "<="  LE
+                 , binop  "<"   LT
+                 , binop  ">="  GE
+                 , binop  ">"   GT
+                 , binop  "="   EQ
+                 , binop  "!="  NEQ
+                 ]
+               , [ binop' "&"   And '&'
+                 , binop' "|"   Or  '|'
+                 , binop  "^"   Xor
+                 ]
+               , [ binop  "&&"  LAnd
+                 , binop  "||"  LOr
+                 ]
                ]
+  where binop  op f     = Infix (reservedOp op >> return (BinOp f)) AssocLeft
+        binop' op f not = Infix (try $ reservedOp op >> notFollowedBy (char not) >>
+                                       return (BinOp f)) AssocLeft
 
 parseString :: Parser a -> String -> a
 parseString parser str =
