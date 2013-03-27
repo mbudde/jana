@@ -67,8 +67,8 @@ whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
 identifier :: Parser Ident
 identifier =
-  do ident <- t_identifier
-     pos   <- getPosition
+  do pos   <- getPosition
+     ident <- t_identifier
      return $ Ident ident pos
 
 program :: Parser Program
@@ -84,8 +84,8 @@ genProcedure =   try (liftM Left mainProcedure)
 mainProcedure :: Parser ProcMain
 mainProcedure =
   do reserved "procedure"
-     reserved "main"
      pos <- getPosition
+     reserved "main"
      parens whiteSpace
      vdecls <- many vdecl
      stats  <- many1 statement
@@ -104,11 +104,10 @@ vdecl =
 procedure :: Parser Proc
 procedure = 
   do reserved "procedure"
-     pos <- getPosition
      name   <- identifier
      params <- parens $ sepBy parameter comma
      stats  <- many1 statement
-     return Proc { procname = name, params = params, body = stats, pos = pos }
+     return Proc { procname = name, params = params, body = stats }
 
 parameter :: Parser (Type, Ident)
 parameter =
@@ -237,44 +236,47 @@ skipStmt = reserved "skip" >> liftM Skip getPosition
 expression :: Parser Expr
 expression = buildExpressionParser binOperators term
 
+addPos :: Parser (SourcePos -> a) -> Parser a
+addPos parser = do pos <- getPosition
+                   t   <- parser
+                   return $ t pos
+
 term :: Parser Expr
 term =   parens expression
-     <|> numberExpr
-     <|> lvalExpr
-     <|> emptyExpr
-     <|> topExpr
-     <|> nilExpr
+     <|> addPos numberExpr
+     <|> addPos lvalExpr
+     <|> addPos emptyExpr
+     <|> addPos topExpr
+     <|> addPos nilExpr
      <?> "expression"
 
-numberExpr :: Parser Expr
+numberExpr :: Parser (SourcePos -> Expr)
 numberExpr = liftM Number integer
 
-lvalExpr :: Parser Expr
-lvalExpr = liftM2 LV lval getPosition
+lvalExpr :: Parser (SourcePos -> Expr)
+lvalExpr = liftM LV lval
 
 lval ::  Parser Lval
 lval =   try lookUp
      <|> liftM Var identifier
 
-nilExpr :: Parser Expr
-nilExpr = reserved "nil" >> liftM Nil getPosition
+nilExpr :: Parser (SourcePos -> Expr)
+nilExpr = reserved "nil" >> (return Nil)
 
 lookUp :: Parser Lval
 lookUp = liftM2 Lookup identifier (brackets expression)
 
-emptyExpr :: Parser Expr
+emptyExpr :: Parser (SourcePos -> Expr)
 emptyExpr =
   do reserved "empty" 
      ident <- (parens identifier)
-     pos   <- getPosition
-     return $ Empty ident pos
+     return $ Empty ident
 
-topExpr :: Parser Expr
+topExpr :: Parser (SourcePos -> Expr)
 topExpr =
   do reserved "top"
      ident <- (parens identifier)
-     pos   <- getPosition
-     return $ Top ident pos
+     return $ Top ident
 
 binOperators = [ [ Infix (reservedOp "*"   >> return (BinOp Mul )) AssocLeft
                  , Infix (reservedOp "/"   >> return (BinOp Div )) AssocLeft

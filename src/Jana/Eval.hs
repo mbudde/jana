@@ -23,39 +23,39 @@ import Jana.Invert
 import Jana.Parser (parseExprString, parseStmtsString)
 
 
-unpackInt :: Value -> Eval Integer
-unpackInt (JInt x) = return x
-unpackInt val = throwError $ TypeMismatch "int" (showValueType val)
+unpackInt :: SourcePos -> Value -> Eval Integer
+unpackInt _ (JInt x) = return x
+unpackInt pos val = throwError $ TypeMismatch "int" (showValueType val) pos
 
-unpackArray :: Value -> Eval Array
-unpackArray (JArray x) = return x
-unpackArray val = throwError $ TypeMismatch "array" (showValueType val)
+unpackArray :: SourcePos -> Value -> Eval Array
+unpackArray _ (JArray x) = return x
+unpackArray pos val = throwError $ TypeMismatch "array" (showValueType val) pos
 
-unpackStack :: Value -> Eval Stack
-unpackStack (JStack x) = return x
-unpackStack val = throwError $ TypeMismatch "stack" (showValueType val)
+unpackStack :: SourcePos -> Value -> Eval Stack
+unpackStack _ (JStack x) = return x
+unpackStack pos val = throwError $ TypeMismatch "stack" (showValueType val) pos
 
 assert :: Bool -> Expr -> Eval ()
 assert bool expr =
   do val1 <- evalExpr expr
      unless (truthy val1 == bool) $
-       throwError $ AssertionFail $ "should be " ++ show bool
+       throwError $ AssertionFail ("should be " ++ show bool) $ getExprPos expr
 
 assertTrue = assert True
 assertFalse = assert False
 
 checkType :: Type -> Value -> Eval ()
-checkType Int   (JInt _)   = return ()
-checkType Int   (JArray _) = return ()
-checkType Stack (JStack _) = return ()
-checkType typ val = throwError $ TypeMismatch
-  (if typ == Int then "int" else "stack") (showValueType val)
+checkType (Int pos)   (JInt _)   = return ()
+checkType (Int pos)   (JArray _) = return ()
+checkType (Stack pos) (JStack _) = return ()
+checkType (Int pos)   val = throwError $ TypeMismatch "int" (showValueType val) pos
+checkType (Stack pos) val = throwError $ TypeMismatch "stack" (showValueType val) pos
 
 
-arrayLookup :: Array -> Integer -> Eval Value
-arrayLookup arr idx =
+arrayLookup :: Array -> Integer -> SourcePos -> Eval Value
+arrayLookup arr idx pos =
   if idx < 0 || idx' >= length arr
-    then throwError OutOfBounds
+    then throwError $ OutOfBounds pos
     else return $ JInt $ arr !! idx'
   where idx' = fromInteger idx
 
@@ -63,6 +63,14 @@ arrayModify :: Array -> Integer -> Integer -> Array
 arrayModify arr idx val = xs ++ val : ys
   where (xs, _:ys) = genericSplitAt idx arr
 
+
+getExprPos :: Expr -> SourcePos
+getExprPos (Number _ pos) = pos
+getExprPos (LV _ pos)     = pos
+getExprPos (BinOp _ e1 _) = getExprPos e1
+getExprPos (Empty _ pos)  = pos
+getExprPos (Top _ pos)    = pos
+getExprPos (Nil pos)      = pos
 
 
 runProgram :: Program -> IO ()
@@ -73,14 +81,14 @@ runProgram (main, procs) =
 
 
 evalMain :: ProcMain -> Eval ()
-evalMain (ProcMain vdecls body) =
+evalMain (ProcMain vdecls body pos) =
   do mapM_ initBinding vdecls
      evalStmts body
-  where initBinding (Scalar Int id)   = bindVar id $ JInt 0
-        initBinding (Scalar Stack id) = bindVar id nil
-        initBinding (Array id size)   = if size < 1
-                                          then throwError ArraySize
-                                          else bindVar id $ initArr size
+  where initBinding (Scalar (Int _) id _)   = bindVar id $ JInt 0
+        initBinding (Scalar (Stack _) id _) = bindVar id nil
+        initBinding (Array id size pos)     = if size < 1
+                                                then throwError $ ArraySize pos
+                                                else bindVar id $ initArr size
         initArr size = JArray $ genericReplicate size 0
 
 evalProc :: Proc -> [Ident] -> Eval ()
@@ -88,17 +96,17 @@ evalProc proc args =
   do values <- mapM getVar args
      oldStoreEnv <- get
      put emptyStore
-     bindArgs (params proc) values
+     bindArgs (params proc) values 
      evalStmts $ body proc
      newValues <- mapM (getVar . snd) (params proc)
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
   where bindArg :: (Type, Ident) -> Value -> Eval ()
         bindArg (typ, id) val = checkType typ val >> setVar id val
-        bindArgs params values =
+        bindArgs params values pos =
           if expArgs /= gotArgs
-            then throwError $ ArgumentError (procname proc)
-                                            expArgs gotArgs
+            then throwError $ ArgumentError (ident $ procname proc)
+                                            expArgs gotArgs pos
             else mapM_ (uncurry bindArg) (zip params values)
         expArgs = length (params proc)
         gotArgs = length args
@@ -113,7 +121,7 @@ assignLval modOp (Lookup id idxExpr) expr pos =
   do idx    <- unpackInt =<< evalExpr idxExpr
      arr    <- unpackArray =<< getVar id
      val    <- evalExpr expr
-     oldval <- arrayLookup arr idx
+     oldval <- arrayLookup arr idx (getExprPos idxExpr)
      newval <- unpackInt =<< performModOperation modOp oldval val pos
      setVar id $ JArray $ arrayModify arr idx newval
 
@@ -239,4 +247,3 @@ evalString str =
         procs = fromList [("foo", Proc { procname = "foo"
                                        , params = [(Int, "x")]
                                        , body = [Assign AddEq (Var "x") (Number 5)] }) ]
-

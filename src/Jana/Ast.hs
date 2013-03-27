@@ -14,6 +14,9 @@ data Ident =
   Ident String SourcePos
   deriving (Eq, Show)
 
+ident :: Ident -> String
+ident (Ident s _) = s
+
 -- Left-value
 data Lval
     = Var    Ident
@@ -51,7 +54,7 @@ data Stmt
 
 -- Expression
 data Expr
-    = Number   Integer
+    = Number   Integer SourcePos
     | LV       Lval SourcePos
     | BinOp    BinOp Expr Expr
     | Empty    Ident SourcePos
@@ -75,7 +78,6 @@ data Proc
     = Proc { procname  :: Ident
            , params    :: [(Type, Ident)]   -- Zero or more
            , body      :: [Stmt]
-           , pos       :: SourcePos
            }
     deriving (Eq, Show)
 
