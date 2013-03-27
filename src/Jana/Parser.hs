@@ -71,14 +71,14 @@ program =
      return (mains, procs)
 
 genProcedure :: Parser (Either ProcMain Proc)
-genProcedure =   try (liftM Left mainProcedure)
-             <|> liftM Right procedure
+genProcedure =
+  do reserved "procedure"
+     (try (reserved "main") >> liftM Left mainProcedure)
+       <|> liftM Right procedure
 
 mainProcedure :: Parser ProcMain
 mainProcedure =
-  do reserved "procedure"
-     reserved "main"
-     parens whiteSpace
+  do parens whiteSpace
      vdecls <- many vdecl
      stats  <- many1 statement
      return $ ProcMain vdecls stats
@@ -94,8 +94,7 @@ vdecl =
      
 procedure :: Parser Proc
 procedure = 
-  do reserved "procedure"
-     name   <- identifier
+  do name   <- identifier
      params <- parens $ sepBy parameter comma
      stats  <- many1 statement
      return Proc { procname = name, params = params, body = stats }
