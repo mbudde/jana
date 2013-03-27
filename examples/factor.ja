@@ -9,15 +9,17 @@
 
 
 // factor num into table in fact[]
-procedure factor(int num, int try, int z, int i, int fact)
+procedure factor(int num, int fact)
+    local int try = 0   // Attempted factor.
+    local int i = 0     // Pointer to last factor in factor table.
     from (try = 0) && (num > 1) loop
         call nexttry(try)
         from fact[i] != try loop               // Divide out all occurrences of this
             i += 1                             // factor
             fact[i] += try
-            z += num / try
+            local int z = num / try
             z <=> num
-            z -= num * try
+            delocal int z = num * try
 	    until (num % try) != 0
     until (try * try) > num                    // Exit early if possible
 
@@ -32,7 +34,7 @@ procedure factor(int num, int try, int z, int i, int fact)
     fi fact[i] != fact[i-1]
 
     if (fact[i-1] * fact[i-1]) < fact[i] then  // Zero try
-        from (try*try) > fact[i] loop
+        from (try * try) > fact[i] loop
             uncall nexttry(try)
 	    until try = 0
     else
@@ -40,6 +42,8 @@ procedure factor(int num, int try, int z, int i, int fact)
     fi (fact[i-1] * fact[i-1]) < fact[i]
 
     call zeroi(i, fact)                        // Zero i
+    delocal int i = 0
+    delocal int try = 0
 
 procedure zeroi(int i, int fact)
     from fact[i+1] = 0 loop
@@ -54,21 +58,17 @@ procedure nexttry(int try)
 
 procedure main()
     int num      // Number to factor.  Ends up zero
-    int try      // Attempted factor.  Starts and ends zero
-    int z        // Temporary.  Starts and ends zero
-    int i        // Pointer to last factor in factor table.  Starts zero
     int fact[20] // Factor table.  Starts zero. Ends with factors in ascending order
 
     num += 840
-    call factor(num, try, z, i, fact)
+    call factor(num, fact)
 
 /*
-procedure main_bwd
-      fact[1]+=2
-      fact[2]+=2
-      fact[3]+=2
-      fact[4]+=3
-      fact[5]+=5
-      fact[6]+=7
-      uncall factor
+    fact[1] += 2
+    fact[2] += 2
+    fact[3] += 2
+    fact[4] += 3
+    fact[5] += 5
+    fact[6] += 7
+    uncall factor(num, fact)
 */
