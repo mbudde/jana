@@ -170,6 +170,7 @@ evalStmt (Local assign1 stmts assign2) =
                throwError $ AssertionFail $
                  printf "'%s' has the value '%s' not '%s'"
                         id (show val') (show val)
+             unbindVar id
 evalStmt (Call funId args) =
   do proc <- getProc funId
      evalProc proc args

@@ -5,7 +5,7 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     JError(..),
-    Store, showStore, emptyStore, bindVar, setVar, getVar,
+    Store, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
     ProcEnv, emptyProcEnv, procEnvFromList, bindProc, getProc,
     Eval, runEval,
     ) where
@@ -116,8 +116,13 @@ bindVar id val =
        Nothing  -> put $ Map.insert id val storeEnv
        Just val -> throwError $ AlreadyBound id
 
+unbindVar :: Ident -> Eval ()
+unbindVar = modify . Map.delete
+
+
 setVar :: Ident -> Value -> Eval ()
 setVar id val = modify $ Map.insert id val
+
 
 getVar :: Ident -> Eval Value
 getVar id =
