@@ -68,6 +68,7 @@ program :: Parser Program
 program =
   do whiteSpace
      (mains, procs) <- liftM partitionEithers (many genProcedure)
+     eof
      return (mains, procs)
 
 genProcedure :: Parser (Either ProcMain Proc)
