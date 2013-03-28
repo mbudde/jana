@@ -92,7 +92,7 @@ getExprPos (Nil pos)      = pos
 
 
 runProgram :: Program -> IO ()
-runProgram (main, procs) =
+runProgram (Program main procs) =
   do case procEnvFromList procs of
        Left err -> print err
        Right procEnv ->
@@ -196,7 +196,7 @@ evalStmt (Local assign1 stmts assign2@(_, (Ident _ pos), _) _) =
           do val <- evalExpr expr
              val' <- getVar id
              unless (val == val') $
-               pos <!!> wrongDelocalValue id (show val') (show val)
+               pos <!!> wrongDelocalValue id (show val) (show val')
 evalStmt stmt@(Call funId args _) =
   do proc <- getProc funId
      evalProc proc args

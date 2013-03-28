@@ -6,18 +6,18 @@ import Text.Parsec.Pos
 data Type
     = Int SourcePos
     | Stack SourcePos
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Identifier
 data Ident =
   Ident String SourcePos
-  deriving (Eq, Show)
+  deriving (Eq)
 
 -- Left-value
 data Lval
     = Var    Ident
     | Lookup Ident Expr
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Modification operators used in assignment
 data ModOp
@@ -32,7 +32,7 @@ data BinOp
     | And | Or | Xor                  -- Binary (& | ^)
     | LAnd | LOr                      -- Logical (&& ||)
     | GT | LT | EQ | NEQ | GE | LE    -- Relational (> < = != >= <=)
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Show)
 
 -- Statement
 data Stmt
@@ -46,7 +46,7 @@ data Stmt
     | Uncall   Ident [Ident] SourcePos
     | Swap     Ident Ident SourcePos
     | Skip SourcePos
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Expression
 data Expr
@@ -56,18 +56,18 @@ data Expr
     | Empty    Ident SourcePos
     | Top      Ident SourcePos
     | Nil SourcePos
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Declaration
 data Vdecl
     = Scalar Type Ident SourcePos
     | Array  Ident Integer SourcePos
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Main procedure
 data ProcMain
     = ProcMain [Vdecl] [Stmt] SourcePos
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Procedure definition
 data Proc
@@ -75,9 +75,9 @@ data Proc
            , params    :: [(Type, Ident)]   -- Zero or more
            , body      :: [Stmt]
            }
-    deriving (Eq, Show)
+    deriving (Eq)
 
-type Program = (ProcMain, [Proc])
+data Program = Program ProcMain [Proc]
 
 
 class Identifiable a where

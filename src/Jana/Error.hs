@@ -6,6 +6,7 @@ import Text.Printf (printf)
 import Text.Parsec.Pos
 
 import Jana.Ast
+import Jana.Format
 
 
 joinlines = intercalate "\n"
@@ -41,6 +42,8 @@ instance Show Message where
            funid argid
   show (InExpression expr) =
     "In expression:\n" ++ (indent $ show expr)
+  show (InStatement stmt@(Local {}) store) =
+    printf "In statement: %s\n%s" (show $ formatDelocal stmt) (indent store)
   show (InStatement stmt store) =
     printf "In statement: %s\n%s" (show stmt) (indent store)
   show (InProcedure proc) =
