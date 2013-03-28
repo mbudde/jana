@@ -14,9 +14,6 @@ data Ident =
   Ident String SourcePos
   deriving (Eq, Show)
 
-ident :: Ident -> String
-ident (Ident s _) = s
-
 -- Left-value
 data Lval
     = Var    Ident
@@ -82,3 +79,20 @@ data Proc
     deriving (Eq, Show)
 
 type Program = (ProcMain, [Proc])
+
+
+class Identifiable a where
+  ident :: a -> String
+
+instance Identifiable Ident where
+  ident (Ident id _) = id
+
+instance Identifiable Lval where
+  ident (Var id) = ident id
+  ident (Lookup id _) = ident id
+
+instance Identifiable ProcMain where
+  ident _ = "main"
+
+instance Identifiable Proc where
+  ident proc = ident $ procname proc
