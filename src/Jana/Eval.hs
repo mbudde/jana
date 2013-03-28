@@ -92,7 +92,7 @@ getExprPos (Nil pos)      = pos
 
 
 runProgram :: Program -> IO ()
-runProgram (main, procs) =
+runProgram (Program main procs) =
   do case procEnvFromList procs of
        Left err -> print err
        Right procEnv ->
