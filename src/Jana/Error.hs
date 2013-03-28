@@ -1,7 +1,7 @@
 module Jana.Error where
 
 import Control.Monad.Error
-import Data.List (intercalate)
+import Data.List (intercalate, sort)
 import Text.Printf (printf)
 import Text.Parsec.Pos
 
@@ -15,25 +15,36 @@ indent = joinlines . map ("    " ++) . lines
 
 
 data Message = Message String
-             | InArgument String Ident
+             | InArgument String String
              | InExpression Expr
-             | InStatement Stmt
+             | InStatement Stmt String
              | InProcedure String
-             | StoreState String
+
+instance Enum Message where
+    fromEnum (Message       _) = 0
+    fromEnum (InArgument  _ _) = 1
+    fromEnum (InExpression  _) = 2
+    fromEnum (InStatement _ _) = 3
+    fromEnum (InProcedure   _) = 4
+    toEnum _ = error "toEnum is undefined for Message"
+
+instance Eq Message where
+    m1 == m2 = fromEnum m1 == fromEnum m2
+
+instance Ord Message where
+    compare msg1 msg2 = compare (fromEnum msg1) (fromEnum msg2)
 
 instance Show Message where
   show (Message s) = s
   show (InArgument funid argid) =
     printf "In an argument of `%s', namely `%s'"
-           funid (ident argid)
+           funid argid
   show (InExpression expr) =
     "In expression:\n" ++ (indent $ show expr)
-  show (InStatement stmt) =
-    "In statement:\n" ++ (indent $ show stmt)
+  show (InStatement stmt store) =
+    printf "In statement: %s\n%s" (show stmt) (indent store)
   show (InProcedure proc) =
     printf "In procedure `%s'" proc
-  show (StoreState store) =
-    "State when error occured:\n" ++ (indent store)
 
 
 data JanaError = JanaError SourcePos [Message]
@@ -48,7 +59,7 @@ errorPos (JanaError pos _)
 
 errorMessages :: JanaError -> [Message]
 errorMessages (JanaError _ msgs)
-  = msgs
+  = sort $ reverse msgs
 
 errorIsUnknown :: JanaError -> Bool
 errorIsUnknown (JanaError _ msgs)
@@ -64,22 +75,27 @@ newErrorMessage pos msg
 
 addErrorMessage :: Message -> JanaError -> JanaError
 addErrorMessage msg (JanaError pos msgs)
-  = JanaError pos (msgs ++ [msg])
+  = JanaError pos (msg : msgs)
 
 setErrorPos :: JanaError -> SourcePos -> JanaError
 setErrorPos (JanaError _ msgs) pos
   = JanaError pos msgs
 
-{-
 setErrorMessage :: Message -> JanaError -> JanaError
 setErrorMessage msg (JanaError pos msgs)
     = JanaError pos (msg : filter (msg /=) msgs)
--}
+
+addOnceErrorMessage :: Message -> JanaError -> JanaError
+addOnceErrorMessage msg err@(JanaError pos msgs)
+    | msg `elem` msgs = err
+    | otherwise = JanaError pos (msg : filter (msg /=) msgs)
 
 instance Show JanaError where
-  show (JanaError pos msgs) =
+  show err =
     printf "File \"%s\" in line %d, column %d:\n%s"
            (sourceName pos) (sourceLine pos) (sourceColumn pos)
            (showMsgs msgs)
-    where showMsgs []   = indent "Unknown error occured"
+    where pos = errorPos err
+          msgs = errorMessages err
+          showMsgs []   = indent "Unknown error occured"
           showMsgs msgs = joinlines $ map (indent . show) msgs

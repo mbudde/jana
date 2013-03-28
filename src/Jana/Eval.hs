@@ -23,14 +23,18 @@ import Jana.Error
 import Jana.ErrorMessages
 import Jana.Parser (parseExprString, parseStmtsString)
 
+inArgument :: (Identifiable b, Identifiable c) => b -> c -> Eval a -> Eval a
+inArgument funid argid monad = catchError monad $
+  throwError . (addErrorMessage $ InArgument (ident funid) (ident argid))
 
 inExpression :: Expr -> Eval a -> Eval a
 inExpression expr monad = catchError monad $
-  throwError . (addErrorMessage $ InExpression expr)
+  throwError . (addOnceErrorMessage $ InExpression expr)
 
 inStatement :: Stmt -> Eval a -> Eval a
 inStatement stmt monad = catchError monad $
-  throwError . (addErrorMessage $ InStatement stmt)
+  \err -> do store <- get
+             throwError $ addErrorMessage (InStatement stmt (showStore store)) err
 
 inProcedure :: Proc -> Eval a -> Eval a
 inProcedure proc monad = catchError monad $
@@ -98,7 +102,7 @@ runProgram (main, procs) =
 
 
 evalMain :: ProcMain -> Eval ()
-evalMain (ProcMain vdecls body pos) =
+evalMain proc@(ProcMain vdecls body pos) =
   do mapM_ initBinding vdecls
      evalStmts body
   where initBinding (Scalar (Int _) id _)   = bindVar id $ JInt 0
@@ -119,7 +123,8 @@ evalProc proc args =
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
   where bindArg :: (Type, Ident) -> Value -> Eval ()
-        bindArg (typ, id) val = checkType typ val >> setVar id val
+        bindArg (typ, id) val = inArgument proc id $
+          checkType typ val >> setVar id val
         bindArgs params values pos =
           if expArgs /= gotArgs
             then pos <!!> argumentError proc expArgs gotArgs
@@ -145,7 +150,7 @@ assignLval modOp (Lookup id idxExpr) expr pos =
   where exprPos = getExprPos expr
 
 evalStmts :: [Stmt] -> Eval ()
-evalStmts = mapM_ evalStmt
+evalStmts = mapM_ (\stmt -> inStatement stmt $ evalStmt stmt)
 
 evalStmt :: Stmt -> Eval ()
 evalStmt (Assign modOp lval expr pos) = assignLval modOp lval expr pos
@@ -192,7 +197,7 @@ evalStmt (Local assign1 stmts assign2@(_, (Ident _ pos), _) _) =
              val' <- getVar id
              unless (val == val') $
                pos <!!> wrongDelocalValue id (show val') (show val)
-evalStmt (Call funId args _) =
+evalStmt stmt@(Call funId args _) =
   do proc <- getProc funId
      evalProc proc args
 evalStmt (Uncall funId args _) =
@@ -218,7 +223,7 @@ evalLval (Lookup id@(Ident _ pos) e) =
 evalExpr :: Expr -> Eval Value
 evalExpr (Number x _) = return $ JInt x
 evalExpr (Nil _)      = return nil
-evalExpr (LV lval _)  = evalLval lval
+evalExpr expr@(LV lval _)  = inExpression expr $ evalLval lval
 evalExpr (BinOp LAnd e1 e2) =
   do x <- evalExpr e1
      if truthy x
@@ -233,16 +238,16 @@ evalExpr (BinOp LOr e1 e2) =
        else do y <- evalExpr e2
                if truthy y then return $ JInt 1
                            else return $ JInt 0
-evalExpr (BinOp op e1 e2) =
+evalExpr expr@(BinOp op e1 e2) = inExpression expr $
   do x <- evalExpr e1
      y <- evalExpr e2
      performOperation op x y (getExprPos e1) (getExprPos e2)
-evalExpr (Top id pos) =
+evalExpr expr@(Top id pos) = inExpression expr $
   do stack <- unpackStack pos =<< getVar id
      case stack of
        (x:xs) -> return $ JInt x
        []     -> return nil
-evalExpr (Empty id pos) =
+evalExpr expr@(Empty id pos) = inExpression expr $
   do stack <- unpackStack pos =<< getVar id
      case stack of
        [] -> return $ JInt 1

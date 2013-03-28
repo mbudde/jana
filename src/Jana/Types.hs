@@ -6,7 +6,7 @@ module Jana.Types (
     showValueType, typesMatch, truthy,
     Store, showStore, emptyStore, bindVar, setVar, getVar,
     ProcEnv, emptyProcEnv, procEnvFromList, getProc,
-    Eval, runEval,
+    Eval, runEval, (<!!>)
     ) where
 
 import Prelude hiding (GT, LT, EQ)
@@ -163,3 +163,9 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 {- instance Monad Eval Store where -}
     {- return = E . return -}
     {- e >>= f = S -}
+
+{- throwJanaError :: (MonadError e m) => SourcePos -> Message -> m a -}
+throwJanaError pos msg = throwError $ newErrorMessage pos msg
+
+infixr 1 <!!>
+pos <!!> msg = throwJanaError pos msg

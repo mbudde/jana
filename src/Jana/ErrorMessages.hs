@@ -6,11 +6,6 @@ import Jana.Error
 
 import Jana.Ast
 
-{- throwJanaError :: (MonadError e m) => SourcePos -> Message -> m a -}
-throwJanaError pos msg = throwError $ newErrorMessage pos msg
-
-infixr 1 <!!>
-pos <!!> msg = throwJanaError pos msg
 
 
 unboundVar :: String -> Message
