@@ -6,7 +6,6 @@ import Text.Printf (printf)
 import Text.Parsec.Pos
 
 import Jana.Ast
-import Jana.Environment
 
 
 joinlines = intercalate "\n"
@@ -20,7 +19,7 @@ data Message = Message String
              | InExpression Expr
              | InStatement Stmt
              | InProcedure String
-             | StoreState Store
+             | StoreState String
 
 instance Show Message where
   show (Message s) = s
@@ -34,7 +33,7 @@ instance Show Message where
   show (InProcedure id) =
     printf "In procedure `%s'" id
   show (StoreState store) =
-    "State when error occured:\n" ++ (indent $ showStore store)
+    "State when error occured:\n" ++ (indent store)
 
 
 data JanaError = JanaError SourcePos [Message]

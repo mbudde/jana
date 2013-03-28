@@ -22,6 +22,8 @@ import qualified Data.Map as Map
 import Text.Parsec.Pos
 
 import Jana.Ast
+import Jana.Error
+import Jana.ErrorMessages
 
 type Array = [Integer]
 type Stack = [Integer]
@@ -135,7 +137,7 @@ emptyProcEnv = Map.empty
 procEnvFromList :: [Proc] -> Either JanaError ProcEnv
 procEnvFromList = foldM insertProc emptyProcEnv
   where insertProc env p = if Map.notMember (ident p) env
-                             then return $ Map.insert (pname p) p env
+                             then return $ Map.insert (ident p) p env
                              else throwJanaError (ppos p) $ procDefined p
         ppos  Proc { procname = (Ident _ pos) } = pos
 
