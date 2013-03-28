@@ -9,6 +9,10 @@ import Jana.Ast
 {- throwJanaError :: (MonadError e m) => SourcePos -> Message -> m a -}
 throwJanaError pos msg = throwError $ newErrorMessage pos msg
 
+infixr 1 <!!>
+pos <!!> msg = throwJanaError pos msg
+
+
 unboundVar :: String -> Message
 unboundVar name = Message $
   printf "Variable `%s' has not been declared" name
@@ -25,6 +29,10 @@ typeMismatch expType actualType = Message $
   printf "Couldn't match expected type `%s'\n\
          \            with actual type `%s'" expType actualType
 
+swapTypeError :: String -> String -> Message
+swapTypeError typ1 typ2 = Message $
+  printf "Can't swap variables of type `%s' and `%s'" typ1 typ2
+
 outOfBounds :: (PrintfArg a) => a -> a -> Message
 outOfBounds index size = Message $
   printf "Array index `%d' was out of bounds (array size was 4)"
@@ -33,9 +41,20 @@ outOfBounds index size = Message $
 emptyStack :: Message
 emptyStack = Message "Can't pop from empty stack"
 
+popToNonZero :: Ident -> Message
+popToNonZero id = Message $
+  printf "Can't pop to non-zero variable `%s'" (ident id)
+
 assertionFail :: String -> Message
 assertionFail s = Message $
   "Assertion failed: " ++ s
+
+wrongDelocalValue :: Ident -> String -> String -> Message
+wrongDelocalValue id expect actual = Message $
+  printf "Expected value `%s'\n\
+         \       but got `%s'\n\
+         \for variable `%s'"
+         expect actual (ident id)
 
 undefProc :: String -> Message
 undefProc name = Message $
@@ -45,10 +64,10 @@ procDefined :: (Identifiable a) => a -> Message
 procDefined id = Message $
   printf "Procedure `%s' is already defined" (ident id)
 
-argumentError :: (PrintfArg a) => Ident -> a -> a -> Message
-argumentError procId expect actual = Message $
+argumentError :: (Identifiable a, PrintfArg b) => a -> b -> b -> Message
+argumentError id expect actual = Message $
   printf "Procedure `%s' expects %d argument(s) but got %d"
-         (ident procId) expect actual
+         (ident id) expect actual
 
 arraySize :: Message
 arraySize = Message "Array size must be greater than or equal to one"

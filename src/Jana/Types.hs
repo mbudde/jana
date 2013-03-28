@@ -82,15 +82,15 @@ opFunc NEQ  = boolToInt (/=)
 opFunc GE   = boolToInt (>=)
 opFunc LE   = boolToInt (<=)
 
-performOperation :: BinOp -> Value -> Value -> SourcePos -> Eval Value
-performOperation op (JInt x) (JInt y) _ =
+performOperation :: BinOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
+performOperation op (JInt x) (JInt y) _ _ =
   return $ JInt $ opFunc op x y
-performOperation _ (JInt _) val pos =
-  throwJanaError pos $ typeMismatch "int" (showValueType val)
-performOperation _ val _ pos =
-  throwJanaError pos $ typeMismatch "int" (showValueType val)
+performOperation _ (JInt _) val _ pos =
+  pos <!!> typeMismatch "int" (showValueType val)
+performOperation _ val _ pos _ =
+  pos <!!> typeMismatch "int" (showValueType val)
 
-performModOperation :: ModOp -> Value -> Value -> SourcePos -> Eval Value
+performModOperation :: ModOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
 performModOperation modOp = performOperation $ modOpToBinOp modOp
   where modOpToBinOp AddEq = Add
         modOpToBinOp SubEq = Sub
@@ -117,7 +117,7 @@ bindVar (Ident name pos) val =
   do storeEnv <- get
      case Map.lookup name storeEnv of
        Nothing  -> put $ Map.insert name val storeEnv
-       Just _ -> throwJanaError pos $ alreadyBound name
+       Just _ -> pos <!!> alreadyBound name
 
 setVar :: Ident -> Value -> Eval ()
 setVar (Ident name _) val = modify $ Map.insert name val
@@ -127,7 +127,7 @@ getVar (Ident name pos) =
   do storeEnv <- get
      case Map.lookup name storeEnv of
        Just val -> return val
-       Nothing  -> throwJanaError pos $ unboundVar name
+       Nothing  -> pos <!!> unboundVar name
 
 
 type ProcEnv = Map.Map String Proc
@@ -137,8 +137,8 @@ emptyProcEnv = Map.empty
 procEnvFromList :: [Proc] -> Either JanaError ProcEnv
 procEnvFromList = foldM insertProc emptyProcEnv
   where insertProc env p = if Map.notMember (ident p) env
-                             then return $ Map.insert (ident p) p env
-                             else throwJanaError (ppos p) $ procDefined p
+                             then Right $ Map.insert (ident p) p env
+                             else Left $ newErrorMessage (ppos p) (procDefined p)
         ppos  Proc { procname = (Ident _ pos) } = pos
 
 getProc :: Ident -> Eval Proc
@@ -146,7 +146,7 @@ getProc (Ident funName pos) =      -- FIXME: calling main?
   do procEnv <- ask
      case Map.lookup funName procEnv of
        Just proc -> return proc
-       Nothing   -> throwJanaError pos $ undefProc funName
+       Nothing   -> pos <!!> undefProc funName
 
 
 --

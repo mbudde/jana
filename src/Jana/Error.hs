@@ -30,8 +30,8 @@ instance Show Message where
     "In expression:\n" ++ (indent $ show expr)
   show (InStatement stmt) =
     "In statement:\n" ++ (indent $ show stmt)
-  show (InProcedure id) =
-    printf "In procedure `%s'" id
+  show (InProcedure proc) =
+    printf "In procedure `%s'" proc
   show (StoreState store) =
     "State when error occured:\n" ++ (indent store)
 
@@ -62,8 +62,8 @@ newErrorMessage :: SourcePos -> Message -> JanaError
 newErrorMessage pos msg
   = JanaError pos [msg]
 
-addErrorMessage :: JanaError -> Message -> JanaError
-addErrorMessage (JanaError pos msgs) msg
+addErrorMessage :: Message -> JanaError -> JanaError
+addErrorMessage msg (JanaError pos msgs)
   = JanaError pos (msgs ++ [msg])
 
 setErrorPos :: JanaError -> SourcePos -> JanaError

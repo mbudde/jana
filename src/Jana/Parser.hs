@@ -311,7 +311,7 @@ parseStmtsString = parseString (many1 statement)
 parseFile :: String -> IO Program
 parseFile file =
   do str <- readFile file
-     case parse program "" str of
+     case parse program file str of
        Left e  -> print e >> fail "parse error"
        Right r -> return r
 
