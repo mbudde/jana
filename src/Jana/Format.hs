@@ -54,6 +54,7 @@ formatExpr = f 0
         f _ (LV lval _) = formatLval lval
         f _ (Empty id _) = text "empty" <> parens (formatIdent id)
         f _ (Top id _) = text "top" <> parens (formatIdent id)
+        f _ (Nil _) = text "nil"
         f d (BinOp op e1 e2) = let opd = opPrec op in
                                parens' (d > opd) (f opd e1 <+> formatBinOp op <+> f opd e2)
         opPrec = snd . (opMap Map.!)
@@ -87,9 +88,9 @@ formatStmt (Push id1 id2 _) =
 formatStmt (Pop id1 id2 _) =
   text "pop" <> parens (formatIdent id1 <> comma <+> formatIdent id2)
 formatStmt (Local (typ1, id1, e1) s (typ2, id2, e2) _) =
-  text "local" <+> formatType typ1 <+> formatIdent id1 $+$
+  text "local" <+> formatType typ1 <+> formatIdent id1 <+> equals <+> formatExpr e1 $+$
   formatStmts s $+$
-  text "delocal" <+> formatType typ2 <+> formatIdent id2
+  text "delocal" <+> formatType typ2 <+> formatIdent id2 <+> equals <+> formatExpr e2
 formatStmt (Call id args _) =
   text "call" <+> formatIdent id <> parens (hsep $ punctuate (char ',') (map formatIdent args))
 formatStmt (Uncall id args _) =
@@ -98,6 +99,10 @@ formatStmt (Swap id1 id2 _) =
   formatIdent id1 <+> text "<=>" <+> formatIdent id2
 formatStmt (Skip _) =
   text "skip"
+
+formatDelocal (Local _ _ (typ, id, e) _) =
+  text "delocal" <+> formatType typ <+> formatIdent id <+> equals <+> formatExpr e
+formatDelocal _ = undefined
 
 formatMain (ProcMain vdecls body _) =
   text "procedure main()" $+$
