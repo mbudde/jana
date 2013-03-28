@@ -1,4 +1,3 @@
-
 module Jana.Ast where
 
 import Text.Parsec.Pos

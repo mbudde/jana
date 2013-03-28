@@ -2,8 +2,8 @@ module Jana.ErrorMessages where
 
 import Control.Monad.Error
 import Text.Printf
-import Jana.Error
 
+import Jana.Error
 import Jana.Ast
 
 
@@ -30,7 +30,7 @@ swapTypeError typ1 typ2 = Message $
 
 outOfBounds :: (PrintfArg a) => a -> a -> Message
 outOfBounds index size = Message $
-  printf "Array index `%d' was out of bounds (array size was 4)"
+  printf "Array index `%d' was out of bounds (array size was %d)"
          index size
 
 emptyStack :: Message
@@ -46,10 +46,9 @@ assertionFail s = Message $
 
 wrongDelocalValue :: Ident -> String -> String -> Message
 wrongDelocalValue id expect actual = Message $
-  printf "Expected value `%s'\n\
-         \       but got `%s'\n\
-         \for variable `%s'"
-         expect actual (ident id)
+  printf "Expected value to be `%s' for local variable `%s'\n\
+         \ but actual value is `%s'"
+         expect (ident id) actual
 
 undefProc :: String -> Message
 undefProc name = Message $
