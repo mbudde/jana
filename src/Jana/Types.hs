@@ -83,6 +83,8 @@ opFunc GE   = boolToInt (>=)
 opFunc LE   = boolToInt (<=)
 
 performOperation :: BinOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
+performOperation Div (JInt _) (JInt 0) _ pos =
+  pos <!!> divisionByZero
 performOperation op (JInt x) (JInt y) _ _ =
   return $ JInt $ opFunc op x y
 performOperation _ (JInt _) val _ pos =

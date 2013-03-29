@@ -66,3 +66,6 @@ argumentError id expect actual = Message $
 arraySize :: Message
 arraySize = Message "Array size must be greater than or equal to one"
 
+divisionByZero :: Message
+divisionByZero = Message "Division by zero"
+
