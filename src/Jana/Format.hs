@@ -85,7 +85,7 @@ formatStmt (If e1 s1 s2 e2 _) =
   elsePart $+$
   text "fi" <+> formatExpr e2
   where elsePart | null s2   = empty
-                 | otherwise = text "else" $+$ nest 4 (formatStmts ss)
+                 | otherwise = text "else" $+$ nest 4 (formatStmts s2)
 
 formatStmt (From e1 s1 s2 e2 _) =
   text "from" <+> formatExpr e1 <+> keyword $+$
