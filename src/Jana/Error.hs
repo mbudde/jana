@@ -46,7 +46,9 @@ instance Show Message where
   show (InStatement stmt store) = render $
     text "In statement:" $+$
       nest 4 (formatStmtAbbrv stmt) $+$
-      nest 2 (text "where" <+> vcat (map text $ lines store))
+      if store /= ""
+        then nest 2 (text "where" <+> vcat (map text $ lines store))
+        else empty
   show (InProcedure proc) =
     printf "In procedure `%s'" proc
 
