@@ -1,0 +1,5 @@
+procedure test()
+    call test()
+
+procedure main()
+    call test()

@@ -1,0 +1,8 @@
+procedure foo()
+    skip
+
+procedure foo()
+    skip
+
+procedure main()
+    skip

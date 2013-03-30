@@ -1,0 +1,6 @@
+procedure foo(int x)
+    from x = 1
+    until x = 0
+procedure main()
+    int x
+    uncall foo(x)

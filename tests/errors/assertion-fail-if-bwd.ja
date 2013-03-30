@@ -1,0 +1,8 @@
+procedure foo(int x)
+    if x = 1 then
+        skip
+    fi x = 0
+
+procedure main()
+    int x
+    uncall foo(x)

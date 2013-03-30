@@ -1,0 +1,5 @@
+procedure main()
+    int x
+    int y
+    stack z
+    x ^= y + z

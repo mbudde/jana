@@ -1,0 +1,5 @@
+procedure foo(int x, int x)
+    skip
+
+procedure main()
+    skip

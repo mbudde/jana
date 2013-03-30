@@ -1,0 +1,4 @@
+procedure main()
+    int x
+    from x = 1
+    until x = 0

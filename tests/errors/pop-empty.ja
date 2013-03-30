@@ -1,0 +1,4 @@
+procedure main()
+    int x
+    stack s
+    pop(x, s)
