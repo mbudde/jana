@@ -123,9 +123,12 @@ formatStmt (Skip _) =
   text "skip"
 
 
-formatStmtsAbbrv []  = empty
-formatStmtsAbbrv [s] = formatStmt s
-formatStmtsAbbrv _   = text "..."
+formatStmtsAbbrv []         = empty
+formatStmtsAbbrv [If {}]    = text "..."
+formatStmtsAbbrv [From {}]  = text "..."
+formatStmtsAbbrv [Local {}] = text "..."
+formatStmtsAbbrv [s]        = formatStmt s
+formatStmtsAbbrv _          = text "..."
 
 
 formatStmtAbbrv (If e1 s1 s2 e2 _) =
