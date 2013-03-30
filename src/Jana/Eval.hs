@@ -7,6 +7,7 @@ module Jana.Eval (
 
 
 import Prelude hiding (GT, LT, EQ)
+import Data.Char (toLower)
 import Data.Map (fromList)
 import Data.List (genericSplitAt, genericReplicate)
 import Control.Monad
@@ -57,7 +58,7 @@ assert :: Bool -> Expr -> Eval ()
 assert bool expr =
   do val1 <- evalExpr expr
      unless (truthy val1 == bool) $
-       getExprPos expr <!!> assertionFail ("should be " ++ show bool)
+       getExprPos expr <!!> assertionFail ("should be " ++ (map toLower $ show bool))
 
 assertTrue = assert True
 assertFalse = assert False
