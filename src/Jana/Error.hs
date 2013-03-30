@@ -3,6 +3,7 @@ module Jana.Error where
 import Control.Monad.Error
 import Data.List (intercalate, sort)
 import Text.Printf (printf)
+import Text.PrettyPrint
 import Text.Parsec.Pos
 
 import Jana.Ast
@@ -40,12 +41,12 @@ instance Show Message where
   show (InArgument funid argid) =
     printf "In an argument of `%s', namely `%s'"
            funid argid
-  show (InExpression expr) =
-    "In expression:\n" ++ (indent $ show expr)
-  show (InStatement stmt@(Local {}) store) =
-    printf "In statement: %s\n%s" (show $ formatDelocal stmt) (indent store)
-  show (InStatement stmt store) =
-    printf "In statement: %s\n%s" (show stmt) (indent store)
+  show (InExpression expr) = render $
+    text "In expression:" $+$ nest 4 (formatExpr expr)
+  show (InStatement stmt store) = render $
+    text "In statement:" $+$
+      nest 4 (formatStmtAbbrv stmt) $+$
+    text "where" <+> vcat (map text $ lines store)
   show (InProcedure proc) =
     printf "In procedure `%s'" proc
 

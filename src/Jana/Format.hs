@@ -123,9 +123,37 @@ formatStmt (Skip _) =
   text "skip"
 
 
-formatDelocal (Local _ _ (typ, id, e) _) =
-  text "delocal" <+> formatType typ <+> formatIdent id <+> equals <+> formatExpr e
-formatDelocal _ = undefined
+formatStmtsAbbrv []  = empty
+formatStmtsAbbrv [s] = formatStmt s
+formatStmtsAbbrv _   = text "..."
+
+
+formatStmtAbbrv (If e1 s1 s2 e2 _) =
+  text "if" <+> formatExpr e1 <+> text "then" $+$
+    nest 4 (formatStmtsAbbrv s1) $+$
+  elsePart $+$
+  text "fi" <+> formatExpr e2
+  where elsePart | null s2   = empty
+                 | otherwise = text "else" $+$ nest 4 (formatStmtsAbbrv s2)
+
+formatStmtAbbrv (From e1 s1 s2 e2 _) =
+  text "from" <+> formatExpr e1 <+> keyword $+$
+    vcat inside $+$
+  text "until" <+> formatExpr e2
+  where (keyword:inside) = doPart ++ loopPart
+        doPart   | null s1   = []
+                 | otherwise = [text "do", nest 4 (formatStmtsAbbrv s1)]
+        loopPart | null s2   = [empty]
+                 | otherwise = [text "loop", nest 4 (formatStmtsAbbrv s2)]
+
+formatStmtAbbrv (Local (typ1, id1, e1) s (typ2, id2, e2) _) =
+  text "local" <+> localDecl typ1 id1 e1 $+$
+  formatStmtsAbbrv s $+$
+  text "delocal" <+> localDecl typ2 id2 e2
+  where localDecl typ id expr =
+          formatType typ <+> formatIdent id <+> equals <+> formatExpr expr
+
+formatStmtAbbrv s = formatStmt s
 
 
 formatMain (ProcMain vdecls body _) =
