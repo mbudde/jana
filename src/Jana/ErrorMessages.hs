@@ -75,3 +75,7 @@ noMainProc = Message "No main procedure has been defined"
 multipleMainProcs :: Message
 multipleMainProcs = Message "Multiple main procedures has been defined"
 
+procDuplicateArgs :: Proc -> Message
+procDuplicateArgs id = Message $
+  printf "Procedure `%s' has duplicate arguments" (ident id)
+
