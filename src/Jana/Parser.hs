@@ -4,15 +4,29 @@ module Jana.Parser (
 
 import Prelude hiding (GT, LT, EQ)
 import Control.Monad (liftM, liftM2)
+import Data.Char (isSpace)
 import Data.Either (partitionEithers)
-
 import Text.Parsec hiding (Empty)
 import Text.Parsec.String
 import Text.Parsec.Expr
 import Text.Parsec.Pos
+import qualified Text.Parsec.Error as ParsecError
 import qualified Text.Parsec.Token as Token
 
 import Jana.Ast
+import Jana.Error
+
+
+toJanaError :: ParsecError.ParseError -> JanaError
+toJanaError err =
+  newErrorMessage pos (Message $ trim msg)
+  where pos = ParsecError.errorPos err
+        msg = ParsecError.showErrorMessages
+                "or" "Unknown parse error"
+                "Expecting" "Unexpected" "end of input"
+                (ParsecError.errorMessages err)
+        trim = dropWhile isSpace
+
 
 janaDef = Token.LanguageDef {
                 Token.commentStart     = "/*"
@@ -316,9 +330,9 @@ parseExprString = parseString expression
 parseStmtsString :: String -> [Stmt]
 parseStmtsString = parseString (many1 statement)
 
-parseFile :: String -> IO Program
+parseFile :: String -> IO (Either JanaError Program)
 parseFile file =
   do str <- readFile file
      case parse program file str of
-       Left e  -> print e >> fail "parse error"
-       Right r -> return r
+       Left e  -> return $ Left $ toJanaError e
+       Right r -> return $ Right r
