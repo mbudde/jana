@@ -15,7 +15,7 @@ parseAndRun filename =
   do ast <- parseFile filename
      case ast of
        Left err   -> print err
-       Right prog -> runProgram prog
+       Right prog -> runProgram filename prog
 
 main :: IO ()
 main = do file <- getFilename

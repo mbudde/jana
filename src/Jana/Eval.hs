@@ -92,18 +92,18 @@ getExprPos (Top _ pos)    = pos
 getExprPos (Nil pos)      = pos
 
 
-runProgram :: Program -> IO ()
-runProgram (Program [main] procs) =
+runProgram :: String -> Program -> IO ()
+runProgram _ (Program [main] procs) =
   do case procEnvFromList procs of
        Left err -> print err
        Right procEnv ->
          case runEval (evalMain main) emptyStore procEnv of
            Right (_, s) -> putStrLn $ showStore s
            Left err     -> print err
-runProgram (Program [] _) =
-  print $ newErrorMessage (newPos "" 0 0) noMainProc
-runProgram (Program _ _) =
-  print $ newErrorMessage (newPos "" 0 0) multipleMainProcs
+runProgram filename (Program [] _) =
+  print $ newFileError filename noMainProc
+runProgram filename (Program _ _) =
+  print $ newFileError filename multipleMainProcs
 
 
 evalMain :: ProcMain -> Eval ()

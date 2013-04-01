@@ -79,6 +79,11 @@ newErrorMessage :: SourcePos -> Message -> JanaError
 newErrorMessage pos msg
   = JanaError pos [msg]
 
+newFileError :: String -> Message -> JanaError
+newFileError filename
+  = newErrorMessage (newPos filename 0 0)
+
+
 addErrorMessage :: Message -> JanaError -> JanaError
 addErrorMessage msg (JanaError pos msgs)
   = JanaError pos (msg : msgs)
@@ -98,10 +103,14 @@ addOnceErrorMessage msg err@(JanaError pos msgs)
 
 instance Show JanaError where
   show err =
-    printf "File \"%s\" in line %d, column %d:\n%s"
-           (sourceName pos) (sourceLine pos) (sourceColumn pos)
-           (showMsgs msgs)
+    printf "%s:\n%s" introLine (showMsgs msgs)
     where pos = errorPos err
+          introLine =
+            case (sourceName pos, sourceLine pos, sourceColumn pos) of
+              ("", 0, 0)        -> "Error"
+              (file, 0, 0)      -> "File \"" ++ file ++ "\""
+              (file, line, col) ->
+                printf "File \"%s\" in line %d, column %d" file line col
           msgs = errorMessages err
           showMsgs []   = indent "Unknown error occured"
           showMsgs msgs = joinlines $ map (indent . show) msgs
