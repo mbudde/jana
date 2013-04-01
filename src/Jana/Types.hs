@@ -144,9 +144,22 @@ emptyProcEnv = Map.empty
 procEnvFromList :: [Proc] -> Either JanaError ProcEnv
 procEnvFromList = foldM insertProc emptyProcEnv
   where insertProc env p = if Map.notMember (ident p) env
-                             then Right $ Map.insert (ident p) p env
-                             else Left $ newErrorMessage (ppos p) (procDefined p)
+                             then if checkDuplicateArgs (makeIdentList p)
+                                    then Right (Map.insert (ident p) p env)
+                                    else Left $ newErrorMessage (ppos p) (procDuplicateArgs p)
+                             else Left  $ newErrorMessage (ppos p) (procDefined p)
         ppos  Proc { procname = (Ident _ pos) } = pos
+
+makeIdentList :: Proc -> [Ident]
+makeIdentList (Proc {params = params}) = map paramToIdent params
+  where
+    paramToIdent (_, ident) = ident
+
+checkDuplicateArgs :: [Ident] -> Bool
+checkDuplicateArgs []         = True
+checkDuplicateArgs ([arg])    = True
+checkDuplicateArgs (arg:args) =
+  not (elem arg args) && checkDuplicateArgs args
 
 getProc :: Ident -> Eval Proc
 getProc (Ident funName pos) =      -- FIXME: calling main?

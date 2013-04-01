@@ -11,7 +11,9 @@ data Type
 -- Identifier
 data Ident =
   Ident String SourcePos
-  deriving (Eq)
+
+instance Eq Ident where
+  (Ident name1 _) == (Ident name2 _) = name1 == name2
 
 -- Left-value
 data Lval
