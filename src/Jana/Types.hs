@@ -4,10 +4,9 @@ module Jana.Types (
     Array, Stack,
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
-    JError(..),
     Store, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
-    ProcEnv, emptyProcEnv, procEnvFromList, bindProc, getProc,
-    Eval, runEval,
+    ProcEnv, emptyProcEnv, procEnvFromList, getProc,
+    Eval, runEval, (<!!>)
     ) where
 
 import Prelude hiding (GT, LT, EQ)
@@ -20,7 +19,11 @@ import Text.Printf (printf)
 import qualified Data.Maybe as Maybe
 import qualified Data.Map as Map
 
+import Text.Parsec.Pos
+
 import Jana.Ast
+import Jana.Error
+import Jana.ErrorMessages
 
 type Array = [Integer]
 type Stack = [Integer]
@@ -79,15 +82,17 @@ opFunc NEQ  = boolToInt (/=)
 opFunc GE   = boolToInt (>=)
 opFunc LE   = boolToInt (<=)
 
-performOperation :: BinOp -> Value -> Value -> Eval Value
-performOperation op (JInt x) (JInt y) =
+performOperation :: BinOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
+performOperation Div (JInt _) (JInt 0) _ pos =
+  pos <!!> divisionByZero
+performOperation op (JInt x) (JInt y) _ _ =
   return $ JInt $ opFunc op x y
-performOperation _ (JInt _) val =
-  throwError $ TypeMismatch "int" (showValueType val)
-performOperation _ val _ =
-  throwError $ TypeMismatch "int" (showValueType val)
+performOperation _ (JInt _) val _ pos =
+  pos <!!> typeMismatch "int" (showValueType val)
+performOperation _ val _ pos _ =
+  pos <!!> typeMismatch "int" (showValueType val)
 
-performModOperation :: ModOp -> Value -> Value -> Eval Value
+performModOperation :: ModOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
 performModOperation modOp = performOperation $ modOpToBinOp modOp
   where modOpToBinOp AddEq = Add
         modOpToBinOp SubEq = Sub
@@ -97,7 +102,7 @@ performModOperation modOp = performOperation $ modOpToBinOp modOp
 -- Environment
 --
 
-type Store = Map.Map Ident Value
+type Store = Map.Map String Value
 
 showStore :: Store -> String
 showStore store = intercalate "\n" (map printVdecl (Map.toList store))
@@ -106,61 +111,59 @@ showStore store = intercalate "\n" (map printVdecl (Map.toList store))
 
 emptyStore = Map.empty
 
-envFromList :: [(Ident, Value)] -> Store
+envFromList :: [(String, Value)] -> Store
 envFromList = Map.fromList
 
 bindVar :: Ident -> Value -> Eval ()
-bindVar id val =
+bindVar (Ident name pos) val =
   do storeEnv <- get
-     case Map.lookup id storeEnv of
-       Nothing  -> put $ Map.insert id val storeEnv
-       Just val -> throwError $ AlreadyBound id
+     case Map.lookup name storeEnv of
+       Nothing  -> put $ Map.insert name val storeEnv
+       Just _ -> pos <!!> alreadyBound name
 
 unbindVar :: Ident -> Eval ()
-unbindVar = modify . Map.delete
+unbindVar = modify . Map.delete . ident
 
 
 setVar :: Ident -> Value -> Eval ()
-setVar id val = modify $ Map.insert id val
+setVar (Ident name _) val = modify $ Map.insert name val
 
 
 getVar :: Ident -> Eval Value
-getVar id =
+getVar (Ident name pos) =
   do storeEnv <- get
-     case Map.lookup id storeEnv of
+     case Map.lookup name storeEnv of
        Just val -> return val
-       Nothing  -> throwError $ UnboundVar id
+       Nothing  -> pos <!!> unboundVar name
 
 
-type ProcEnv = Map.Map Ident Proc
+type ProcEnv = Map.Map String Proc
 
 emptyProcEnv = Map.empty
 
-procEnvFromList :: [Proc] -> ProcEnv
-procEnvFromList = Map.fromList . map (\p -> (procname p, p))
-
-bindProc :: Ident -> Proc -> ProcEnv -> ProcEnv
-bindProc name proc env
-  = if Map.notMember name env
-      then Map.insert name proc env
-      else error "function already defined"
+procEnvFromList :: [Proc] -> Either JanaError ProcEnv
+procEnvFromList = foldM insertProc emptyProcEnv
+  where insertProc env p = if Map.notMember (ident p) env
+                             then Right $ Map.insert (ident p) p env
+                             else Left $ newErrorMessage (ppos p) (procDefined p)
+        ppos  Proc { procname = (Ident _ pos) } = pos
 
 getProc :: Ident -> Eval Proc
-getProc funId =      -- FIXME: calling main?
+getProc (Ident funName pos) =      -- FIXME: calling main?
   do procEnv <- ask
-     case Map.lookup funId procEnv of
+     case Map.lookup funName procEnv of
        Just proc -> return proc
-       Nothing   -> throwError $ UndefProc funId
+       Nothing   -> pos <!!> undefProc funName
 
 
 --
 -- Evaluation
 --
 
-newtype Eval a = E { runE :: StateT Store (ReaderT ProcEnv (Either JError)) a }
-               deriving (Monad, MonadError JError, MonadReader ProcEnv, MonadState Store)
+newtype Eval a = E { runE :: StateT Store (ReaderT ProcEnv (Either JanaError)) a }
+               deriving (Monad, MonadError JanaError, MonadReader ProcEnv, MonadState Store)
 
-runEval :: Eval a -> Store -> ProcEnv -> Either JError (a, Store)
+runEval :: Eval a -> Store -> ProcEnv -> Either JanaError (a, Store)
 runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 
 -- XXX: Implement monad instances manually?
@@ -168,38 +171,8 @@ runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
     {- return = E . return -}
     {- e >>= f = S -}
 
+{- throwJanaError :: (MonadError e m) => SourcePos -> Message -> m a -}
+throwJanaError pos msg = throwError $ newErrorMessage pos msg
 
-data JError       -- FIXME: Add source pos
-  = UnboundVar    String           -- ident
-  | AlreadyBound  String           -- ident
-  | TypeError     String           -- message
-  | TypeMismatch  String String    -- expected-type found-type
-  | OutOfBounds
-  | EmptyStack
-  | AssertionFail String
-  | UndefProc     String           -- ident
-  | ArgumentError String Int Int   -- proc-name expected got
-  | ArraySize
-  | Unknown       String           -- message
-
-instance Show JError where
-  show (UnboundVar name) =
-    "variable not declared: " ++ name
-  show (AlreadyBound name) =
-    "variable name is already bound: " ++ name
-  show (TypeError s)     = s
-  show (TypeMismatch expType foundType) =
-    "expected type " ++ expType ++ " but got " ++ foundType
-  show (OutOfBounds)     = "array lookup was out of bounds"
-  show (EmptyStack)      = "cannot pop from empty stack"
-  show (AssertionFail s) = "assertion failed: " ++ s
-  show (UndefProc name)  = printf "procedure '%s' is not defined" name
-  show (ArgumentError name exp got) =
-    printf "procedure '%s' expects %d argument(s) but got %d"
-           name exp got
-  show (ArraySize)       = "array size must be greater than or equal to one"
-  show (Unknown s)       = "unknown error: " ++ s
-
-instance Error JError where
-  noMsg  = Unknown "Unknown error"
-  strMsg = Unknown
+infixr 1 <!!>
+pos <!!> msg = throwJanaError pos msg

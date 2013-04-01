@@ -1,20 +1,23 @@
-
 module Jana.Ast where
+
+import Text.Parsec.Pos
 
 -- Data types
 data Type
-    = Int
-    | Stack
-    deriving (Eq, Show)
+    = Int SourcePos
+    | Stack SourcePos
+    deriving (Eq)
 
 -- Identifier
-type Ident = String
+data Ident =
+  Ident String SourcePos
+  deriving (Eq)
 
 -- Left-value
 data Lval
     = Var    Ident
     | Lookup Ident Expr
-    deriving (Eq, Show)
+    deriving (Eq)
 
 -- Modification operators used in assignment
 data ModOp
@@ -29,42 +32,42 @@ data BinOp
     | And | Or | Xor                  -- Binary (& | ^)
     | LAnd | LOr                      -- Logical (&& ||)
     | GT | LT | EQ | NEQ | GE | LE    -- Relational (> < = != >= <=)
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Show)
 
 -- Statement
 data Stmt
-    = Assign   ModOp Lval Expr
-    | If       Expr [Stmt] [Stmt] Expr
-    | From     Expr [Stmt] [Stmt] Expr
-    | Push     Ident Ident
-    | Pop      Ident Ident
-    | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr)
-    | Call     Ident [Ident]
-    | Uncall   Ident [Ident]
-    | Swap     Ident Ident
-    | Skip
-    deriving (Eq, Show)
+    = Assign   ModOp Lval Expr SourcePos
+    | If       Expr [Stmt] [Stmt] Expr SourcePos
+    | From     Expr [Stmt] [Stmt] Expr SourcePos
+    | Push     Ident Ident SourcePos
+    | Pop      Ident Ident SourcePos
+    | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr) SourcePos
+    | Call     Ident [Ident] SourcePos
+    | Uncall   Ident [Ident] SourcePos
+    | Swap     Ident Ident SourcePos
+    | Skip SourcePos
+    deriving (Eq)
 
 -- Expression
 data Expr
-    = Number   Integer
-    | LV       Lval
+    = Number   Integer SourcePos
+    | LV       Lval SourcePos
     | BinOp    BinOp Expr Expr
-    | Empty    Ident
-    | Top      Ident
-    | Nil
-    deriving (Eq, Show)
+    | Empty    Ident SourcePos
+    | Top      Ident SourcePos
+    | Nil SourcePos
+    deriving (Eq)
 
 -- Declaration
 data Vdecl
-    = Scalar Type Ident
-    | Array  Ident Integer
-    deriving (Eq, Show)
+    = Scalar Type Ident SourcePos
+    | Array  Ident Integer SourcePos
+    deriving (Eq)
 
 -- Main procedure
 data ProcMain
-    = ProcMain [Vdecl] [Stmt]
-    deriving (Eq, Show)
+    = ProcMain [Vdecl] [Stmt] SourcePos
+    deriving (Eq)
 
 -- Procedure definition
 data Proc
@@ -72,6 +75,23 @@ data Proc
            , params    :: [(Type, Ident)]   -- Zero or more
            , body      :: [Stmt]
            }
-    deriving (Eq, Show)
+    deriving (Eq)
 
-type Program = ([ProcMain], [Proc])
+data Program = Program [ProcMain] [Proc]
+
+
+class Identifiable a where
+  ident :: a -> String
+
+instance Identifiable Ident where
+  ident (Ident id _) = id
+
+instance Identifiable Lval where
+  ident (Var id) = ident id
+  ident (Lookup id _) = ident id
+
+instance Identifiable ProcMain where
+  ident _ = "main"
+
+instance Identifiable Proc where
+  ident proc = ident $ procname proc

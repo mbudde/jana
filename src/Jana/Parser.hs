@@ -1,6 +1,5 @@
 module Jana.Parser (
     parseExprString, parseStmtsString, parseString, parseFile,
-    cmpParse,
     ) where
 
 import Prelude hiding (GT, LT, EQ)
@@ -10,6 +9,7 @@ import Data.Either (partitionEithers)
 import Text.Parsec hiding (Empty)
 import Text.Parsec.String
 import Text.Parsec.Expr
+import Text.Parsec.Pos
 import qualified Text.Parsec.Token as Token
 
 import Jana.Ast
@@ -51,7 +51,7 @@ janaDef = Token.LanguageDef {
 
 lexer = Token.makeTokenParser janaDef
 
-identifier = Token.identifier lexer -- parses an identifier
+t_identifier = Token.identifier lexer -- parses an identifier
 reserved   = Token.reserved   lexer -- parses a reserved name
 reservedOp = Token.reservedOp lexer -- parses an operator
 parens     = Token.parens     lexer -- parses surrounding parenthesis:
@@ -64,38 +64,47 @@ semi       = Token.semi       lexer -- parses a semicolon
 comma      = Token.comma      lexer -- parses a comma
 whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
+identifier :: Parser Ident
+identifier =
+  do pos   <- getPosition
+     ident <- t_identifier
+     return $ Ident ident pos
+
 program :: Parser Program
 program =
   do whiteSpace
      (mains, procs) <- liftM partitionEithers (many genProcedure)
      eof
-     return (mains, procs)
+     return $ Program mains procs
 
 genProcedure :: Parser (Either ProcMain Proc)
-genProcedure =
-  do reserved "procedure"
-     (try (reserved "main") >> liftM Left mainProcedure)
-       <|> liftM Right procedure
+genProcedure =     try (liftM Left mainProcedure)
+               <|> liftM Right procedure
 
 mainProcedure :: Parser ProcMain
 mainProcedure =
-  do parens whiteSpace
+  do reserved "procedure"
+     pos <- getPosition
+     reserved "main"
+     parens whiteSpace
      vdecls <- many vdecl
      stats  <- many1 statement
-     return $ ProcMain vdecls stats
-     
+     return $ ProcMain vdecls stats pos
+
 vdecl :: Parser Vdecl
 vdecl =
   do mytype <- atype
      ident  <- identifier
-     if mytype == Int
-       then     liftM (Array ident) (brackets integer)
-            <|> return (Scalar mytype ident)
-       else return $ Scalar mytype ident
-     
+     pos    <- getPosition
+     case mytype of
+       (Int _) ->     liftM2 (Array ident) (brackets integer) getPosition
+                  <|> return (Scalar mytype ident pos)
+       _       -> return $ Scalar mytype ident pos
+
 procedure :: Parser Proc
-procedure = 
-  do name   <- identifier
+procedure =
+  do reserved "procedure"
+     name   <- identifier
      params <- parens $ sepBy parameter comma
      stats  <- many1 statement
      return Proc { procname = name, params = params, body = stats }
@@ -122,9 +131,10 @@ statement =   try assignStmt
 assignStmt :: Parser Stmt
 assignStmt =
   do lval  <- lval
+     pos   <- getPosition
      modop <- modOp
      expr  <- expression
-     return $ Assign modop lval expr
+     return $ Assign modop lval expr pos
 
 modOp :: Parser ModOp
 modOp =   (reservedOp "+=" >> return AddEq)
@@ -134,35 +144,39 @@ modOp =   (reservedOp "+=" >> return AddEq)
 ifStmt :: Parser Stmt
 ifStmt =
   do reserved "if"
+     pos   <- getPosition
      entrycond <- expression
      reserved "then"
      stats1    <- many1 statement
      stats2    <- option [] $ reserved "else" >> many1 statement
      reserved "fi"
      exitcond  <- expression
-     return $ If entrycond stats1 stats2 exitcond
+     return $ If entrycond stats1 stats2 exitcond pos
 
 fromStmt :: Parser Stmt
 fromStmt =
   do reserved "from"
+     pos   <- getPosition
      entrycond <- expression
      stats1    <- option [] $ reserved "do"   >> many1 statement
      stats2    <- option [] $ reserved "loop" >> many1 statement
      reserved "until"
      exitcond  <- expression
-     return $ From entrycond stats1 stats2 exitcond
+     return $ From entrycond stats1 stats2 exitcond pos
 
 pushStmt :: Parser Stmt
 pushStmt =
   do reserved "push"
+     pos   <- getPosition
      (x,y) <- parens twoArgs
-     return $ Push x y
+     return $ Push x y pos
 
 popStmt :: Parser Stmt
 popStmt =
   do reserved "pop"
+     pos   <- getPosition
      (x,y) <- parens twoArgs
-     return $ Pop x y
+     return $ Pop x y pos
 
 twoArgs :: Parser (Ident, Ident)
 twoArgs =
@@ -175,6 +189,7 @@ twoArgs =
 localStmt :: Parser Stmt
 localStmt =
   do reserved "local"
+     pos   <- getPosition
      type1  <- atype
      ident1 <- identifier
      reservedOp "="
@@ -185,69 +200,83 @@ localStmt =
      ident2 <- identifier
      reservedOp "="
      expr2  <- expression
-     return $ Local (type1, ident1, expr1) stats (type2, ident2, expr2)
+     return $ Local (type1, ident1, expr1) stats (type2, ident2, expr2) pos
 
 atype :: Parser Type
-atype =   (reserved "int"   >> return Int)
-      <|> (reserved "stack" >> return Stack)
+atype =   (reserved "int"   >> liftM Int getPosition)
+      <|> (reserved "stack" >> liftM Stack getPosition)
 
 callStmt :: Parser Stmt
 callStmt =
   do reserved "call"
+     pos   <- getPosition
      procname <- identifier
      args     <- parens $ sepBy identifier comma
-     return $ Call procname args
+     return $ Call procname args pos
 
 uncallStmt :: Parser Stmt
 uncallStmt =
   do reserved "uncall"
+     pos   <- getPosition
      procname <- identifier
      args     <- parens $ sepBy identifier comma
-     return $ Uncall procname args
+     return $ Uncall procname args pos
 
 swapStmt :: Parser Stmt
 swapStmt =
   do ident1 <- identifier
+     pos   <- getPosition
      reservedOp "<=>"
      ident2 <- identifier
-     return $ Swap ident1 ident2
+     return $ Swap ident1 ident2 pos
 
 skipStmt :: Parser Stmt
-skipStmt = reserved "skip" >> return Skip
+skipStmt = reserved "skip" >> liftM Skip getPosition
 
 expression :: Parser Expr
 expression = buildExpressionParser binOperators term
 
+addPos :: Parser (SourcePos -> a) -> Parser a
+addPos parser = do pos <- getPosition
+                   t   <- parser
+                   return $ t pos
+
 term :: Parser Expr
 term =   parens expression
-     <|> numberExpr
-     <|> lvalExpr
-     <|> emptyExpr
-     <|> topExpr
-     <|> nilExpr
+     <|> addPos numberExpr
+     <|> addPos lvalExpr
+     <|> addPos emptyExpr
+     <|> addPos topExpr
+     <|> addPos nilExpr
      <?> "expression"
 
-numberExpr :: Parser Expr
+numberExpr :: Parser (SourcePos -> Expr)
 numberExpr = liftM Number integer
 
-lvalExpr :: Parser Expr
+lvalExpr :: Parser (SourcePos -> Expr)
 lvalExpr = liftM LV lval
 
 lval ::  Parser Lval
 lval =   try lookUp
      <|> liftM Var identifier
 
-nilExpr :: Parser Expr
-nilExpr = reserved "nil" >> return Nil
+nilExpr :: Parser (SourcePos -> Expr)
+nilExpr = reserved "nil" >> (return Nil)
 
 lookUp :: Parser Lval
 lookUp = liftM2 Lookup identifier (brackets expression)
 
-emptyExpr :: Parser Expr
-emptyExpr = reserved "empty" >> liftM Empty (parens identifier)
+emptyExpr :: Parser (SourcePos -> Expr)
+emptyExpr =
+  do reserved "empty"
+     ident <- (parens identifier)
+     return $ Empty ident
 
-topExpr :: Parser Expr
-topExpr = reserved "top" >> liftM Top (parens identifier)
+topExpr :: Parser (SourcePos -> Expr)
+topExpr =
+  do reserved "top"
+     ident <- (parens identifier)
+     return $ Top ident
 
 binOperators = [ [ binop  "*"   Mul
                  , binop  "/"   Div
@@ -290,10 +319,6 @@ parseStmtsString = parseString (many1 statement)
 parseFile :: String -> IO Program
 parseFile file =
   do str <- readFile file
-     case parse program "" str of
+     case parse program file str of
        Left e  -> print e >> fail "parse error"
        Right r -> return r
-
-cmpParse file p2 =
-  do p <- parseFile file
-     print (if p == p2 then "Equal!" else "Not equal!")
