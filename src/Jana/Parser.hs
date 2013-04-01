@@ -1,6 +1,5 @@
 module Jana.Parser (
     parseExprString, parseStmtsString, parseString, parseFile,
-    cmpParse,
     ) where
 
 import Prelude hiding (GT, LT, EQ)
@@ -75,7 +74,7 @@ program :: Parser Program
 program =
   do whiteSpace
      ([main], procs) <- liftM partitionEithers (many genProcedure)
-     return (main, procs)
+     return $ Program main procs
 
 genProcedure :: Parser (Either ProcMain Proc)
 genProcedure =   try (liftM Left mainProcedure)
@@ -90,19 +89,19 @@ mainProcedure =
      vdecls <- many vdecl
      stats  <- many1 statement
      return $ ProcMain vdecls stats pos
-     
+
 vdecl :: Parser Vdecl
 vdecl =
   do mytype <- atype
      ident  <- identifier
      pos    <- getPosition
-     if mytype == Int pos
-       then     liftM2 (Array ident) (brackets integer) getPosition
-            <|> return (Scalar mytype ident pos)
-       else return $ Scalar mytype ident pos
-     
+     case mytype of
+       (Int _) ->     liftM2 (Array ident) (brackets integer) getPosition
+                  <|> return (Scalar mytype ident pos)
+       _       -> return $ Scalar mytype ident pos
+
 procedure :: Parser Proc
-procedure = 
+procedure =
   do reserved "procedure"
      name   <- identifier
      params <- parens $ sepBy parameter comma
@@ -268,7 +267,7 @@ lookUp = liftM2 Lookup identifier (brackets expression)
 
 emptyExpr :: Parser (SourcePos -> Expr)
 emptyExpr =
-  do reserved "empty" 
+  do reserved "empty"
      ident <- (parens identifier)
      return $ Empty ident
 
@@ -311,10 +310,6 @@ parseStmtsString = parseString (many1 statement)
 parseFile :: String -> IO Program
 parseFile file =
   do str <- readFile file
-     case parse program "" str of
+     case parse program file str of
        Left e  -> print e >> fail "parse error"
        Right r -> return r
-
-cmpParse file p2 =
-  do p <- parseFile file
-     print (if p == p2 then "Equal!" else "Not equal!")
