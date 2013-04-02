@@ -44,6 +44,12 @@ assertionFail :: String -> Message
 assertionFail s = Message $
   "Assertion failed: " ++ s
 
+delocalTypeMismatch :: Ident -> String -> String -> Message
+delocalTypeMismatch id expect actual = Message $
+  printf "Expected  to be `%s' for local variable `%s'\n\
+         \ but actual value is `%s'"
+         expect (ident id) actual
+
 wrongDelocalValue :: Ident -> String -> String -> Message
 wrongDelocalValue id expect actual = Message $
   printf "Expected value to be `%s' for local variable `%s'\n\
