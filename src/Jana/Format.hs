@@ -71,7 +71,9 @@ formatVdecl (Scalar typ id _) =
   formatType typ <+> formatIdent id
 
 formatVdecl (Array id size _) =
-  text "int" <+> formatIdent id <> brackets (integer size)
+  text "int" <+> formatIdent id <> brackets (formatSize size)
+  where formatSize (Just x) = integer x
+        formatSize Nothing  = empty
 
 
 formatStmts = vcat . map formatStmt
@@ -167,9 +169,7 @@ formatMain (ProcMain vdecls body _) =
             formatStmts body)
 
 
-formatParams = commasep . map formatParam
-  where formatParam (typ, id) = formatType typ <+> formatIdent id
-
+formatParams = commasep . map formatVdecl
 
 formatProc proc =
   text "procedure" <+> formatIdent (procname proc) <>
