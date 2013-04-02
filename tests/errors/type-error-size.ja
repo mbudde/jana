@@ -1,0 +1,9 @@
+procedure main()
+    int x
+    stack a
+    int b[3]
+    int c
+    x += size(a)
+    x += size(b)
+    x += size(c)
+ 
