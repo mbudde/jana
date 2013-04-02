@@ -26,6 +26,10 @@ class JanusLexer(RegexLexer):
     ]
 
     identifier = '[a-zA-Z][a-zA-Z0-9]*'
+    ascii = ['NUL','SOH','[SE]TX','EOT','ENQ','ACK',
+             'BEL','BS','HT','LF','VT','FF','CR','S[OI]','DLE',
+             'DC[1-4]','NAK','SYN','ETB','CAN',
+             'EM','SUB','ESC','[FGRU]S','SP','DEL']
 
     tokens = {
         'whitespace': [
@@ -44,9 +48,15 @@ class JanusLexer(RegexLexer):
             (r'\b(nil)\b', Name.Constant),
             (operators, Operator),
             (identifier, Name.Variable),
+            (r'"', String, 'string'),
             include('number'),
             (r'[()\[\],]', Punctuation),
             (r'.', Error),
+        ],
+        'string': [
+            (r'[^\\"\n]+', String.Double),
+            include('escape-sequence'),
+            (r'["\n]', String.Double, '#pop'),
         ],
         'number': [
             (r'[+-]?\d+', Number.Integer),
@@ -57,4 +67,11 @@ class JanusLexer(RegexLexer):
             (r'\*\/', Comment.Multiline, '#pop'),
             (r'[/*]', Comment.Multiline),
         ],
+        'escape-sequence': [
+            (r'\\[abfnrtv0\\\"\'\?]', String.Escape),
+            (r'\\x[0-9a-fA-F]{2}', String.Escape),
+            (r'\\u[0-9a-fA-F]{4}', String.Escape),
+            # Yes, \U literals are 6 hex digits.
+            (r'\\U[0-9a-fA-F]{6}', String.Escape)
+        ]
     }

@@ -8,7 +8,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-syn keyword janusKeyword swap local delocal push pop nil
+syn keyword janusKeyword swap local delocal push pop nil error
 syn keyword janusKeyword call uncall
 syn keyword janusStatement procedure nextgroup=janusProcedure skipwhite
 syn keyword janusConditional if then else fi
@@ -19,6 +19,12 @@ syn keyword janusType int stack
 
 syn match   janusProcedure "\w\+" contained
 
+
+syn match   janusSpecialChar      contained "\\\([0-9]\+\|o[0-7]\+\|x[0-9a-fA-F]\+\|[\"\\'&\\abfnrtv]\|^[A-Z^_\[\\\]]\)"
+syn match   janusSpecialChar      contained "\\\(NUL\|SOH\|STX\|ETX\|EOT\|ENQ\|ACK\|BEL\|BS\|HT\|LF\|VT\|FF\|CR\|SO\|SI\|DLE\|DC1\|DC2\|DC3\|DC4\|NAK\|SYN\|ETB\|CAN\|EM\|SUB\|ESC\|FS\|GS\|RS\|US\|SP\|DEL\)"
+syn match   janusSpecialCharError contained "\\&\|'''\+"
+syn region  janusString	          start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=janusSpecialChar
+
 syn match   janusNumber	"\<\%([1-9]\d*\|0\)\>"
 
 syn keyword janusCommentTodo   TODO FIXME XXX TBD contained
@@ -26,6 +32,8 @@ syn match   janusLineComment   "\/\/.*" contains=janusCommentTodo
 syn region  janusComment       start="/\*" end="\*/" contains=janusCommentTodo
 
 
+hi def link janusString         String
+hi def link janusSpecialChar    SpecialChar
 hi def link janusNumber         Number
 hi def link janusProcedure      Function
 hi def link janusStatement      Statement
