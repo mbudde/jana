@@ -1,0 +1,6 @@
+procedure main()
+    local int foo = 0
+    local int bar = 0
+    skip
+    delocal int foo = 0
+    delocal int bar = 0

@@ -6,7 +6,11 @@ import Text.Parsec.Pos
 data Type
     = Int SourcePos
     | Stack SourcePos
-    deriving (Eq)
+
+instance Eq Type where
+  (Int _)   == (Int _)   = True
+  (Stack _) == (Stack _) = True
+  _         == _         = False
 
 -- Identifier
 data Ident =

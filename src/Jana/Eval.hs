@@ -190,19 +190,25 @@ evalStmt stmt@(Pop id1 id2 pos) =
          (x:xs) -> setVar id1 (JInt x) >> setVar id2 (JStack xs)
          []     -> pos <!!> emptyStack
 evalStmt (Local assign1 stmts assign2@(_, (Ident _ pos), _) _) =
-  do createBinding assign1
+  do checkIdentAndType assign1 assign2
+     createBinding assign1
      evalStmts stmts
      assertBinding assign2
   where createBinding (typ, id, expr) =
           do val <- evalExpr expr
              checkType typ val
              bindVar id val
-        assertBinding (_, id, expr) =   -- XXX: check type?
+        assertBinding (_, id, expr) =
           do val <- evalExpr expr
              val' <- getVar id
              unless (val == val') $
                pos <!!> wrongDelocalValue id (show val) (show val')
              unbindVar id
+        checkIdentAndType (typ1, id1, _) (typ2, id2, _) =
+          do unless (id1 == id2) $
+               pos <!!> delocalNameMismatch id1 id2
+             unless (typ1 == typ2) $
+               pos <!!> delocalTypeMismatch id1 (show typ1) (show typ2)
 evalStmt stmt@(Call funId args _) =
   do proc <- getProc funId
      evalProc proc args

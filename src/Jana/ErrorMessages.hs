@@ -44,11 +44,20 @@ assertionFail :: String -> Message
 assertionFail s = Message $
   "Assertion failed: " ++ s
 
+delocalNameMismatch :: Ident -> Ident -> Message
+delocalNameMismatch id1 id2 = Message $
+  printf "Variable names does not match in local declaration:\n\
+         \    `%s' in `local'\n\
+         \    `%s' in `delocal'\n\
+         \`delocal' statements must come in reverse order of the `local' statments"
+         (ident id1) (ident id2)
+
 delocalTypeMismatch :: Ident -> String -> String -> Message
-delocalTypeMismatch id expect actual = Message $
-  printf "Expected  to be `%s' for local variable `%s'\n\
-         \ but actual value is `%s'"
-         expect (ident id) actual
+delocalTypeMismatch id locType delocType = Message $
+  printf "Type of variable `%s' does not match local declaration:\n\
+         \    `%s' in `local'\n\
+         \    `%s' in `delocal'"
+         (ident id) locType delocType
 
 wrongDelocalValue :: Ident -> String -> String -> Message
 wrongDelocalValue id expect actual = Message $
