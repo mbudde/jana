@@ -120,6 +120,9 @@ formatStmt (Uncall id args _) =
 formatStmt (Swap id1 id2 _) =
   formatIdent id1 <+> text "<=>" <+> formatIdent id2
 
+formatStmt (UserError msg _) =
+  text "error" <+> text (show msg)
+
 formatStmt (Skip _) =
   text "skip"
 

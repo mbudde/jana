@@ -50,6 +50,7 @@ data Stmt
     | Local    (Type, Ident, Expr) [Stmt] (Type, Ident, Expr) SourcePos
     | Call     Ident [Ident] SourcePos
     | Uncall   Ident [Ident] SourcePos
+    | UserError String SourcePos
     | Swap     Ident Ident SourcePos
     | Skip SourcePos
     deriving (Eq)
