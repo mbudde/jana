@@ -99,3 +99,6 @@ procDuplicateArgs :: Proc -> Message
 procDuplicateArgs id = Message $
   printf "Procedure `%s' has duplicate arguments" (ident id)
 
+userError :: String -> Message
+userError msg = Message $ "User error: " ++ msg
+
