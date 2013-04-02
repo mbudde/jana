@@ -254,12 +254,12 @@ evalExpr expr@(BinOp op e1 e2) = inExpression expr $
   do x <- evalExpr e1
      y <- evalExpr e2
      performOperation op x y (getExprPos e1) (getExprPos e2)
-evalExpr expr@(Top id pos) = inExpression expr $
+evalExpr expr@(Top id pos) = inArgument "top" (ident id) $
   do stack <- unpackStack pos =<< getVar id
      case stack of
        (x:xs) -> return $ JInt x
        []     -> return nil
-evalExpr expr@(Empty id pos) = inExpression expr $
+evalExpr expr@(Empty id pos) = inArgument "empty" (ident id) $
   do stack <- unpackStack pos =<< getVar id
      case stack of
        [] -> return $ JInt 1
