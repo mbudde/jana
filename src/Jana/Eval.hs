@@ -24,9 +24,9 @@ import Jana.Error
 import Jana.ErrorMessages
 import Jana.Parser (parseExprString, parseStmtsString)
 
-inArgument :: (Identifiable b, Identifiable c) => b -> c -> Eval a -> Eval a
+inArgument :: String -> String -> Eval a -> Eval a
 inArgument funid argid monad = catchError monad $
-  throwError . (addErrorMessage $ InArgument (ident funid) (ident argid))
+  throwError . (addErrorMessage $ InArgument funid argid)
 
 inExpression :: Expr -> Eval a -> Eval a
 inExpression expr monad = catchError monad $
@@ -44,15 +44,15 @@ inProcedure proc monad = catchError monad $
 
 unpackInt :: SourcePos -> Value -> Eval Integer
 unpackInt _ (JInt x) = return x
-unpackInt pos val = pos <!!> typeMismatch "int" (showValueType val)
+unpackInt pos val = pos <!!> typeMismatch ["int"] (showValueType val)
 
 unpackArray :: SourcePos -> Value -> Eval Array
 unpackArray _ (JArray x) = return x
-unpackArray pos val = pos <!!> typeMismatch "array" (showValueType val)
+unpackArray pos val = pos <!!> typeMismatch ["array"] (showValueType val)
 
 unpackStack :: SourcePos -> Value -> Eval Stack
 unpackStack _ (JStack x) = return x
-unpackStack pos val = pos <!!> typeMismatch "stack" (showValueType val)
+unpackStack pos val = pos <!!> typeMismatch ["stack"] (showValueType val)
 
 assert :: Bool -> Expr -> Eval ()
 assert bool expr =
@@ -67,8 +67,8 @@ checkType :: Type -> Value -> Eval ()
 checkType (Int pos)   (JInt _)   = return ()
 checkType (Int pos)   (JArray _) = return ()
 checkType (Stack pos) (JStack _) = return ()
-checkType (Int pos)   val = pos <!!> typeMismatch "int" (showValueType val)
-checkType (Stack pos) val = pos <!!> typeMismatch "stack" (showValueType val)
+checkType (Int pos)   val = pos <!!> typeMismatch ["int"] (showValueType val)
+checkType (Stack pos) val = pos <!!> typeMismatch ["stack"] (showValueType val)
 
 
 arrayLookup :: Array -> Integer -> SourcePos -> Eval Value
@@ -128,7 +128,7 @@ evalProc proc args =
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
   where bindArg :: (Type, Ident) -> Value -> Eval ()
-        bindArg (typ, id) val = inArgument proc id $
+        bindArg (typ, id) val = inArgument (ident proc) (ident id) $
           checkType typ val >> setVar id val
         bindArgs params values pos =
           if expArgs /= gotArgs
@@ -264,3 +264,9 @@ evalExpr expr@(Empty id pos) = inExpression expr $
      case stack of
        [] -> return $ JInt 1
        _  -> return $ JInt 0
+evalExpr expr@(Size id@(Ident _ pos) _) = inArgument "size" (ident id) $
+  do boxedVal <- getVar id
+     case boxedVal of
+       JArray xs -> return $ JInt (toInteger $ length xs)
+       JStack xs -> return $ JInt (toInteger $ length xs)
+       val       -> pos <!!> typeMismatch ["array", "stack"] (showValueType val)

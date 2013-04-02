@@ -19,10 +19,15 @@ alreadyBound name = Message $
 typeError :: String -> Message
 typeError = Message
 
-typeMismatch :: String -> String -> Message
-typeMismatch expType actualType = Message $
-  printf "Couldn't match expected type `%s'\n\
-         \            with actual type `%s'" expType actualType
+typeMismatch :: [String] -> String -> Message
+typeMismatch expTypes actualType = Message $
+  printf "Couldn't match expected type %s\n\
+         \            with actual type `%s'" (join expTypes) actualType
+  where join []     = ""
+        join [x]    = quote x
+        join [x, y] = quote x ++ " or " ++ quote y
+        join (x:xs) = quote x ++ ", " ++ join xs
+        quote s = "`" ++ s ++ "'"
 
 swapTypeError :: String -> String -> Message
 swapTypeError typ1 typ2 = Message $
