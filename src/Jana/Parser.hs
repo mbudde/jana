@@ -55,6 +55,7 @@ janaDef = Token.LanguageDef {
                                          , "delocal"
                                          , "call"
                                          , "uncall"
+                                         , "error"
                                          , "skip"
                                          , "empty"
                                          , "top"
@@ -68,6 +69,7 @@ lexer = Token.makeTokenParser janaDef
 t_identifier = Token.identifier lexer -- parses an identifier
 reserved   = Token.reserved   lexer -- parses a reserved name
 reservedOp = Token.reservedOp lexer -- parses an operator
+stringLit  = Token.stringLiteral lexer
 parens     = Token.parens     lexer -- parses surrounding parenthesis:
                                     -- parens p
                                     -- takes care of the parenthesis and
@@ -139,6 +141,7 @@ statement =   try assignStmt
           <|> callStmt
           <|> uncallStmt
           <|> try swapStmt
+          <|> errorStmt
           <|> skipStmt
           <?> "statement"
 
@@ -243,6 +246,12 @@ swapStmt =
      reservedOp "<=>"
      ident2 <- identifier
      return $ Swap ident1 ident2 pos
+
+errorStmt :: Parser Stmt
+errorStmt =
+  do pos <- getPosition
+     reserved "error"
+     liftM (flip UserError pos) stringLit
 
 skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> liftM Skip getPosition

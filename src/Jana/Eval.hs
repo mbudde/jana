@@ -6,7 +6,7 @@ module Jana.Eval (
   ) where
 
 
-import Prelude hiding (GT, LT, EQ)
+import Prelude hiding (GT, LT, EQ, userError)
 import Data.Char (toLower)
 import Data.Map (fromList)
 import Data.List (genericSplitAt, genericReplicate)
@@ -221,6 +221,8 @@ evalStmt (Swap id1 id2 pos) =
      if typesMatch val1 val2
        then setVar id2 val1 >> setVar id1 val2
        else pos <!!> swapTypeError (showValueType val1) (showValueType val2)
+evalStmt (UserError msg pos) =
+  pos <!!> userError msg
 
 evalStmt (Skip _) = return ()
 
