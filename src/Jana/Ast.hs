@@ -61,6 +61,7 @@ data Expr
     | BinOp    BinOp Expr Expr
     | Empty    Ident SourcePos
     | Top      Ident SourcePos
+    | Size     Ident SourcePos
     | Nil SourcePos
     deriving (Eq)
 
