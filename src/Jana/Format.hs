@@ -58,6 +58,7 @@ formatExpr = f 0
         f _ (LV lval _)      = formatLval lval
         f _ (Empty id _)     = text "empty" <> parens (formatIdent id)
         f _ (Top id _)       = text "top" <> parens (formatIdent id)
+        f _ (Size id _)      = text "size" <> parens (formatIdent id)
         f _ (Nil _)          = text "nil"
         f d (BinOp op e1 e2) =
           let opd = opPrec op in

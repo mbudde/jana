@@ -58,6 +58,7 @@ janaDef = Token.LanguageDef {
                                          , "skip"
                                          , "empty"
                                          , "top"
+                                         , "size"
                                          , "nil"
                                          ]
               , Token.caseSensitive    = True
@@ -261,6 +262,7 @@ term =   parens expression
      <|> addPos lvalExpr
      <|> addPos emptyExpr
      <|> addPos topExpr
+     <|> addPos sizeExpr
      <|> addPos nilExpr
      <?> "expression"
 
@@ -291,6 +293,9 @@ topExpr =
   do reserved "top"
      ident <- (parens identifier)
      return $ Top ident
+
+sizeExpr :: Parser (SourcePos -> Expr)
+sizeExpr = reserved "size" >> liftM Size (parens identifier)
 
 binOperators = [ [ binop  "*"   Mul
                  , binop  "/"   Div

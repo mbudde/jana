@@ -88,9 +88,9 @@ performOperation Div (JInt _) (JInt 0) _ pos =
 performOperation op (JInt x) (JInt y) _ _ =
   return $ JInt $ opFunc op x y
 performOperation _ (JInt _) val _ pos =
-  pos <!!> typeMismatch "int" (showValueType val)
+  pos <!!> typeMismatch ["int"] (showValueType val)
 performOperation _ val _ pos _ =
-  pos <!!> typeMismatch "int" (showValueType val)
+  pos <!!> typeMismatch ["int"] (showValueType val)
 
 performModOperation :: ModOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
 performModOperation modOp = performOperation $ modOpToBinOp modOp
