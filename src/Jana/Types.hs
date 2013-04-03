@@ -151,9 +151,10 @@ procEnvFromList = foldM insertProc emptyProcEnv
         ppos  Proc { procname = (Ident _ pos) } = pos
 
 makeIdentList :: Proc -> [Ident]
-makeIdentList (Proc {params = params}) = map paramToIdent params
+makeIdentList (Proc {params = params}) = map getVdeclIdent params
   where
-    paramToIdent (_, ident) = ident
+    getVdeclIdent (Scalar _ id _) = id
+    getVdeclIdent (Array id _ _)  = id
 
 checkDuplicateArgs :: [Ident] -> Bool
 checkDuplicateArgs []         = True

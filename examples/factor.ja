@@ -9,7 +9,7 @@
 
 
 // factor num into table in fact[]
-procedure factor(int num, int fact)
+procedure factor(int num, int fact[])
     local int try = 0   // Attempted factor.
     local int i = 0     // Pointer to last factor in factor table.
     from (try = 0) && (num > 1) loop
@@ -45,7 +45,7 @@ procedure factor(int num, int fact)
     delocal int i = 0
     delocal int try = 0
 
-procedure zeroi(int i, int fact)
+procedure zeroi(int i, int fact[])
     from fact[i+1] = 0 loop
         i -= 1
     until i = 0

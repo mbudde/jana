@@ -70,6 +70,23 @@ checkType (Stack pos) (JStack _) = return ()
 checkType (Int pos)   val = pos <!!> typeMismatch ["int"] (showValueType val)
 checkType (Stack pos) val = pos <!!> typeMismatch ["stack"] (showValueType val)
 
+checkVdecl :: Vdecl -> Value -> Eval ()
+checkVdecl (Scalar Int {}   _ _)  (JInt _)     = return ()
+checkVdecl (Scalar Stack {} _ _)  (JStack _)   = return ()
+checkVdecl (Array _ Nothing  _)   (JArray _)   = return ()
+checkVdecl (Array _ (Just x) pos) (JArray arr) =
+  if x == arrLen
+    then return ()
+    else pos <!!> arraySizeMismatch x arrLen
+  where arrLen = toInteger (length arr)
+checkVdecl vdecl val =
+  vdeclPos vdecl <!!> typeMismatch [(vdeclType vdecl)] (showValueType val)
+  where vdeclPos (Scalar _ _ pos) = pos
+        vdeclPos (Array _ _ pos)  = pos
+        vdeclType (Scalar Int{} _ _)   = "int"
+        vdeclType (Scalar Stack{} _ _) = "stack"
+        vdeclType (Array _ _ _)      = "array"
+
 
 arrayLookup :: Array -> Integer -> SourcePos -> Eval Value
 arrayLookup arr idx pos =
@@ -112,9 +129,11 @@ evalMain proc@(ProcMain vdecls body pos) =
      evalStmts body
   where initBinding (Scalar (Int _) id _)   = bindVar id $ JInt 0
         initBinding (Scalar (Stack _) id _) = bindVar id nil
-        initBinding (Array id size pos)     = if size < 1
-                                                then pos <!!> arraySize
-                                                else bindVar id $ initArr size
+        initBinding (Array id Nothing pos)  = pos <!!> arraySizeMissing id
+        initBinding (Array id (Just size) pos) =
+          if size < 1
+            then pos <!!> arraySize
+            else bindVar id $ initArr size
         initArr size = JArray $ genericReplicate size 0
 
 evalProc :: Proc -> [Ident] -> Eval ()
@@ -124,12 +143,12 @@ evalProc proc args =
      put emptyStore
      bindArgs (params proc) values (procPos proc)
      evalStmts $ body proc
-     newValues <- mapM (getVar . snd) (params proc)
+     newValues <- mapM (getVar . getVdeclIdent) (params proc)
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
-  where bindArg :: (Type, Ident) -> Value -> Eval ()
-        bindArg (typ, id) val = inArgument (ident proc) (ident id) $
-          checkType typ val >> setVar id val
+  where bindArg :: Vdecl -> Value -> Eval ()
+        bindArg vdecl val = inArgument (ident proc) (ident $ getVdeclIdent vdecl) $
+          checkVdecl vdecl val >> setVar (getVdeclIdent vdecl) val
         bindArgs params values pos =
           if expArgs /= gotArgs
             then pos <!!> argumentError proc expArgs gotArgs
@@ -137,6 +156,8 @@ evalProc proc args =
         expArgs = length (params proc)
         gotArgs = length args
         procPos Proc { procname = Ident _ pos } = pos
+        getVdeclIdent (Scalar _ id _) = id
+        getVdeclIdent (Array id _ _)  = id
 
 
 assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
