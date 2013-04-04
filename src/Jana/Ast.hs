@@ -69,7 +69,7 @@ data Expr
 -- Declaration
 data Vdecl
     = Scalar Type Ident SourcePos
-    | Array  Ident Integer SourcePos
+    | Array  Ident (Maybe Integer) SourcePos
     deriving (Eq)
 
 -- Main procedure
@@ -80,7 +80,7 @@ data ProcMain
 -- Procedure definition
 data Proc
     = Proc { procname  :: Ident
-           , params    :: [(Type, Ident)]   -- Zero or more
+           , params    :: [Vdecl]   -- Zero or more
            , body      :: [Stmt]
            }
     deriving (Eq)

@@ -110,11 +110,11 @@ mainProcedure =
 
 vdecl :: Parser Vdecl
 vdecl =
-  do mytype <- atype
+  do pos    <- getPosition
+     mytype <- atype
      ident  <- identifier
-     pos    <- getPosition
      case mytype of
-       (Int _) ->     liftM2 (Array ident) (brackets integer) getPosition
+       (Int _) ->     liftM2 (Array ident) (brackets $ optionMaybe integer) (return pos)
                   <|> return (Scalar mytype ident pos)
        _       -> return $ Scalar mytype ident pos
 
@@ -122,7 +122,7 @@ procedure :: Parser Proc
 procedure =
   do reserved "procedure"
      name   <- identifier
-     params <- parens $ sepBy parameter comma
+     params <- parens $ sepBy vdecl comma
      stats  <- many1 statement
      return Proc { procname = name, params = params, body = stats }
 

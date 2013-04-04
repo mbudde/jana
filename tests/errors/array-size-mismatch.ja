@@ -1,0 +1,6 @@
+procedure foo(int x[3])
+    skip
+
+procedure main()
+    int x[4]
+    call foo(x)

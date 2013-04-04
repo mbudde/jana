@@ -86,6 +86,16 @@ argumentError id expect actual = Message $
 arraySize :: Message
 arraySize = Message "Array size must be greater than or equal to one"
 
+arraySizeMissing :: Ident -> Message
+arraySizeMissing id = Message $
+  printf "Array size missing for variable `%s'" (ident id)
+
+arraySizeMismatch :: (PrintfArg a, PrintfArg b) => a -> b -> Message
+arraySizeMismatch exp actual = Message $
+  printf "Expecting array of size %d\n\
+         \           but got size %d"
+         exp actual
+
 divisionByZero :: Message
 divisionByZero = Message "Division by zero"
 
