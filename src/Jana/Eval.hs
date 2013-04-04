@@ -257,12 +257,9 @@ evalLval (Lookup id@(Ident _ pos) e) =
 
 numberToModular :: Value -> Eval Value
 numberToModular (JInt x) =
-  do
-    flag <- asks (modInt . evalOptions)
-    return $ JInt $ if flag
-                      then ((x + 2^31) `mod` 2^32) - 2^31
-                      else x
-numberToModular any = return any
+  do flag <- asks (modInt . evalOptions)
+     return $ JInt $ if flag then ((x + 2^31) `mod` 2^32) - 2^31 else x
+numberToModular val = return val
 
 evalModularExpr :: Expr -> Eval Value
 evalModularExpr expr = evalExpr expr >>= numberToModular

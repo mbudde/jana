@@ -5,7 +5,9 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     Store, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
-    EvalEnv(..), EvalOptions(..), defaultOptions, ProcEnv, emptyProcEnv, procEnvFromList, getProc,
+    EvalEnv(..),
+    EvalOptions(..), defaultOptions,
+    ProcEnv, emptyProcEnv, procEnvFromList, getProc,
     Eval, runEval, (<!!>)
     ) where
 
@@ -136,10 +138,10 @@ getVar (Ident name pos) =
        Just val -> return val
        Nothing  -> pos <!!> unboundVar name
 
-data EvalOptions = EvalOptions { modInt :: Bool, runReverse :: Bool }
-defaultOptions   = EvalOptions { modInt = False, runReverse =  False }
-
 data EvalEnv = EE { evalOptions :: EvalOptions,  procEnv :: ProcEnv }
+
+data EvalOptions = EvalOptions { modInt :: Bool, runReverse :: Bool }
+defaultOptions   = EvalOptions { modInt = False, runReverse = False }
 
 type ProcEnv = Map.Map String Proc
 
