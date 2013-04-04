@@ -13,6 +13,7 @@ import Data.List (genericSplitAt, genericReplicate)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
+import Control.Monad.Reader
 import Text.Printf (printf)
 
 import Text.Parsec.Pos
@@ -56,7 +57,7 @@ unpackStack pos val = pos <!!> typeMismatch ["stack"] (showValueType val)
 
 assert :: Bool -> Expr -> Eval ()
 assert bool expr =
-  do val1 <- evalExpr expr
+  do val1 <- evalModularExpr expr
      unless (truthy val1 == bool) $
        getExprPos expr <!!> assertionFail ("should be " ++ (map toLower $ show bool))
 
@@ -109,17 +110,17 @@ getExprPos (Top _ pos)    = pos
 getExprPos (Nil pos)      = pos
 
 
-runProgram :: String -> Program -> IO ()
-runProgram _ (Program [main] procs) =
+runProgram :: String -> Program -> EvalOptions -> IO ()
+runProgram _ (Program [main] procs) evalOptions =
   do case procEnvFromList procs of
        Left err -> print err
        Right procEnv ->
-         case runEval (evalMain main) emptyStore procEnv of
+         case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
            Right (_, s) -> putStrLn $ showStore s
            Left err     -> print err
-runProgram filename (Program [] _) =
+runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
-runProgram filename (Program _ _) =
+runProgram filename (Program _ _) _ =
   print $ newFileError filename multipleMainProcs
 
 
@@ -162,14 +163,14 @@ evalProc proc args =
 
 assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
 assignLval modOp (Var id) expr _ =
-  do exprVal <- evalExpr expr
+  do exprVal <- evalModularExpr expr
      varVal  <- getVar id
      performModOperation modOp varVal exprVal exprPos exprPos >>= setVar id
   where exprPos = getExprPos expr
 assignLval modOp (Lookup id idxExpr) expr pos =
-  do idx    <- unpackInt exprPos =<< evalExpr idxExpr
+  do idx    <- unpackInt exprPos =<< evalModularExpr idxExpr
      arr    <- unpackArray pos =<< getVar id
-     val    <- evalExpr expr
+     val    <- evalModularExpr expr
      oldval <- arrayLookup arr idx (getExprPos idxExpr)
      newval <- unpackInt pos =<< performModOperation modOp oldval val exprPos exprPos
      setVar id $ JArray $ arrayModify arr idx newval
@@ -181,7 +182,7 @@ evalStmts = mapM_ (\stmt -> inStatement stmt $ evalStmt stmt)
 evalStmt :: Stmt -> Eval ()
 evalStmt (Assign modOp lval expr pos) = assignLval modOp lval expr pos
 evalStmt (If e1 s1 s2 e2 _) =
-  do val1 <- evalExpr e1 -- XXX: int required?
+  do val1 <- evalModularExpr e1 -- XXX: int required?
      if truthy val1
        then do evalStmts s1
                assertTrue e2
@@ -191,7 +192,7 @@ evalStmt (From e1 s1 s2 e2 _) =
   do assertTrue e1
      evalStmts s1
      loop
-  where loop = do val <- evalExpr e2
+  where loop = do val <- evalModularExpr e2
                   unless (truthy val) loopRec
         loopRec = do evalStmts s2
                      assertFalse e1
@@ -216,11 +217,11 @@ evalStmt (Local assign1 stmts assign2@(_, (Ident _ pos), _) _) =
      evalStmts stmts
      assertBinding assign2
   where createBinding (typ, id, expr) =
-          do val <- evalExpr expr
+          do val <- evalModularExpr expr
              checkType typ val
              bindVar id val
         assertBinding (_, id, expr) =
-          do val <- evalExpr expr
+          do val <- evalModularExpr expr
              val' <- getVar id
              unless (val == val') $
                pos <!!> wrongDelocalValue id (show val) (show val')
@@ -250,10 +251,21 @@ evalStmt (Skip _) = return ()
 evalLval :: Lval -> Eval Value
 evalLval (Var id) = getVar id
 evalLval (Lookup id@(Ident _ pos) e) =
-  do idx <- unpackInt (getExprPos e) =<< evalExpr e  -- FIXME: error
+  do idx <- unpackInt (getExprPos e) =<< evalModularExpr e  -- FIXME: error
      arr <- unpackArray pos =<< getVar id
      arrayLookup arr idx pos
 
+numberToModular :: Value -> Eval Value
+numberToModular (JInt x) =
+  do
+    flag <- asks (modInt . evalOptions)
+    return $ JInt $ if flag
+                      then ((x + 2^31) `mod` 2^32) - 2^31
+                      else x
+numberToModular any = return any
+
+evalModularExpr :: Expr -> Eval Value
+evalModularExpr expr = evalExpr expr >>= numberToModular
 
 evalExpr :: Expr -> Eval Value
 evalExpr (Number x _) = return $ JInt x

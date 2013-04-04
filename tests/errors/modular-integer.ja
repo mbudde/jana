@@ -1,0 +1,12 @@
+procedure main()
+  int a
+  // This should be positive no matter what
+  a += 2147483648
+  // This should be negative if modular
+  a += 10
+
+  if (a > 0) then
+    error "Program has been run without modular flag"
+  else
+    error "Program has been run with modular flag"
+  fi 1
