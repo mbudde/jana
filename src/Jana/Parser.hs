@@ -286,7 +286,7 @@ lval =   try lookUp
      <|> liftM Var identifier
 
 nilExpr :: Parser (SourcePos -> Expr)
-nilExpr = reserved "nil" >> (return Nil)
+nilExpr = reserved "nil" >> return Nil
 
 lookUp :: Parser Lval
 lookUp = liftM2 Lookup identifier (brackets expression)
@@ -294,13 +294,13 @@ lookUp = liftM2 Lookup identifier (brackets expression)
 emptyExpr :: Parser (SourcePos -> Expr)
 emptyExpr =
   do reserved "empty"
-     ident <- (parens identifier)
+     ident <- parens identifier
      return $ Empty ident
 
 topExpr :: Parser (SourcePos -> Expr)
 topExpr =
   do reserved "top"
-     ident <- (parens identifier)
+     ident <- parens identifier
      return $ Top ident
 
 sizeExpr :: Parser (SourcePos -> Expr)

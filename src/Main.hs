@@ -25,8 +25,7 @@ checkFile [file] = Right file
 checkFile _ = Left "please provide a single file name"
 
 splitArgs :: [String] -> ([String], [String])
-splitArgs args =
-  partition (\arg -> (head arg) == '-') args
+splitArgs = partition (\arg -> head arg == '-')
 
 checkFlags :: [String] -> Either String EvalOptions
 checkFlags = foldM addOption defaultOptions

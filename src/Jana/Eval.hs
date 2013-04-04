@@ -27,11 +27,11 @@ import Jana.Parser (parseExprString, parseStmtsString)
 
 inArgument :: String -> String -> Eval a -> Eval a
 inArgument funid argid monad = catchError monad $
-  throwError . (addErrorMessage $ InArgument funid argid)
+  throwError . addErrorMessage (InArgument funid argid)
 
 inExpression :: Expr -> Eval a -> Eval a
 inExpression expr monad = catchError monad $
-  throwError . (addOnceErrorMessage $ InExpression expr)
+  throwError . addOnceErrorMessage (InExpression expr)
 
 inStatement :: Stmt -> Eval a -> Eval a
 inStatement stmt monad = catchError monad $
@@ -40,7 +40,7 @@ inStatement stmt monad = catchError monad $
 
 inProcedure :: Proc -> Eval a -> Eval a
 inProcedure proc monad = catchError monad $
-  throwError . (addErrorMessage $ InProcedure $ ident proc)
+  throwError . addErrorMessage (InProcedure $ ident proc)
 
 
 unpackInt :: SourcePos -> Value -> Eval Integer
@@ -59,7 +59,7 @@ assert :: Bool -> Expr -> Eval ()
 assert bool expr =
   do val1 <- evalModularExpr expr
      unless (truthy val1 == bool) $
-       getExprPos expr <!!> assertionFail ("should be " ++ (map toLower $ show bool))
+       getExprPos expr <!!> assertionFail ("should be " ++ map toLower (show bool))
 
 assertTrue = assert True
 assertFalse = assert False
@@ -76,17 +76,15 @@ checkVdecl (Scalar Int {}   _ _)  (JInt _)     = return ()
 checkVdecl (Scalar Stack {} _ _)  (JStack _)   = return ()
 checkVdecl (Array _ Nothing  _)   (JArray _)   = return ()
 checkVdecl (Array _ (Just x) pos) (JArray arr) =
-  if x == arrLen
-    then return ()
-    else pos <!!> arraySizeMismatch x arrLen
+  unless (x == arrLen) $ pos <!!> arraySizeMismatch x arrLen
   where arrLen = toInteger (length arr)
 checkVdecl vdecl val =
-  vdeclPos vdecl <!!> typeMismatch [(vdeclType vdecl)] (showValueType val)
+  vdeclPos vdecl <!!> typeMismatch [vdeclType vdecl] (showValueType val)
   where vdeclPos (Scalar _ _ pos) = pos
         vdeclPos (Array _ _ pos)  = pos
         vdeclType (Scalar Int{} _ _)   = "int"
         vdeclType (Scalar Stack{} _ _) = "stack"
-        vdeclType (Array _ _ _)      = "array"
+        vdeclType (Array{})            = "array"
 
 
 arrayLookup :: Array -> Integer -> SourcePos -> Eval Value
@@ -112,12 +110,12 @@ getExprPos (Nil pos)      = pos
 
 runProgram :: String -> Program -> EvalOptions -> IO ()
 runProgram _ (Program [main] procs) evalOptions =
-  do case procEnvFromList procs of
-       Left err -> print err
-       Right procEnv ->
-         case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
-           Right (_, s) -> putStrLn $ showStore s
-           Left err     -> print err
+  case procEnvFromList procs of
+    Left err -> print err
+    Right procEnv ->
+      case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
+        Right (_, s) -> putStrLn $ showStore s
+        Left err     -> print err
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
 runProgram filename (Program _ _) _ =
@@ -211,7 +209,7 @@ evalStmt stmt@(Pop id1 id2 pos) =
        else case tail of
          (x:xs) -> setVar id1 (JInt x) >> setVar id2 (JStack xs)
          []     -> pos <!!> emptyStack
-evalStmt (Local assign1 stmts assign2@(_, (Ident _ pos), _) _) =
+evalStmt (Local assign1 stmts assign2@(_, Ident _ pos, _) _) =
   do checkIdentAndType assign1 assign2
      createBinding assign1
      evalStmts stmts

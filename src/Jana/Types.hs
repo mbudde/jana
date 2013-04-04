@@ -166,7 +166,7 @@ checkDuplicateArgs :: [Ident] -> Bool
 checkDuplicateArgs []         = True
 checkDuplicateArgs ([arg])    = True
 checkDuplicateArgs (arg:args) =
-  not (elem arg args) && checkDuplicateArgs args
+  arg `notElem` args && checkDuplicateArgs args
 
 getProc :: Ident -> Eval Proc
 getProc (Ident funName pos) =      -- FIXME: calling main?
