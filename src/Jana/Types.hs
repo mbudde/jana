@@ -5,7 +5,7 @@ module Jana.Types (
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
     Store, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
-    ProcEnv, emptyProcEnv, procEnvFromList, getProc,
+    EvalEnv(..), EvalOptions(..), defaultOptions, ProcEnv, emptyProcEnv, procEnvFromList, getProc,
     Eval, runEval, (<!!>)
     ) where
 
@@ -136,6 +136,10 @@ getVar (Ident name pos) =
        Just val -> return val
        Nothing  -> pos <!!> unboundVar name
 
+data EvalOptions = EvalOptions { modInt :: Bool, runReverse :: Bool }
+defaultOptions   = EvalOptions { modInt = False, runReverse =  False }
+
+data EvalEnv = EE { evalOptions :: EvalOptions,  procEnv :: ProcEnv }
 
 type ProcEnv = Map.Map String Proc
 
@@ -164,7 +168,7 @@ checkDuplicateArgs (arg:args) =
 
 getProc :: Ident -> Eval Proc
 getProc (Ident funName pos) =      -- FIXME: calling main?
-  do procEnv <- ask
+  do procEnv <- asks procEnv
      case Map.lookup funName procEnv of
        Just proc -> return proc
        Nothing   -> pos <!!> undefProc funName
@@ -174,10 +178,10 @@ getProc (Ident funName pos) =      -- FIXME: calling main?
 -- Evaluation
 --
 
-newtype Eval a = E { runE :: StateT Store (ReaderT ProcEnv (Either JanaError)) a }
-               deriving (Monad, MonadError JanaError, MonadReader ProcEnv, MonadState Store)
+newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (Either JanaError)) a }
+               deriving (Monad, MonadError JanaError, MonadReader EvalEnv, MonadState Store)
 
-runEval :: Eval a -> Store -> ProcEnv -> Either JanaError (a, Store)
+runEval :: Eval a -> Store -> EvalEnv -> Either JanaError (a, Store)
 runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
 
 -- XXX: Implement monad instances manually?
