@@ -6,13 +6,18 @@ import Jana.Parser
 import Jana.Eval (runProgram)
 import Jana.Types (defaultOptions, EvalOptions(..))
 
+
+usage = "usage: jana [-m] <file>\n\
+        \options:\n\
+        \  -m           use 32-bit modular arithmetic"
+
 parseArgs :: IO (Maybe (String, EvalOptions))
 parseArgs =
   do args <- getArgs
      (flags, file) <- return $ splitArgs args
      case (checkFlags flags, checkFile file) of
-       (Left err, _) -> print err >> return Nothing
-       (_, Left err) -> print err >> return Nothing
+       (Left err, _) -> putStrLn err >> return Nothing
+       (_, Left err) -> putStrLn err >> return Nothing
        (Right evalOptions, Right file) -> return $ Just (file, evalOptions)
 
 checkFile :: [String] -> Either String String
@@ -29,7 +34,7 @@ checkFlags = foldM addOption defaultOptions
 addOption :: EvalOptions -> String -> Either String EvalOptions
 addOption evalOptions "-m" =
   return $ evalOptions{ modInt = True }
-addOption _ f = fail $ "invalid options: " ++ f
+addOption _ f = Left $ "invalid option: " ++ f
 
 parseAndRun :: String -> EvalOptions -> IO ()
 parseAndRun filename evalOptions =
@@ -41,5 +46,5 @@ parseAndRun filename evalOptions =
 main :: IO ()
 main = do args <- parseArgs
           case args of
-            Nothing            -> print "usage: jana <file>"
+            Nothing            -> putStrLn usage
             Just (file, flags) -> parseAndRun file flags
