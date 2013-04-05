@@ -33,6 +33,7 @@ type Stack = [Integer]
 -- Types of values an expression can evaluate to.
 data Value
   = JInt Integer
+  | JBool Bool
   | JArray Array
   | JStack Stack
   deriving (Eq)
@@ -52,6 +53,7 @@ typesMatch :: Value -> Value -> Bool
 typesMatch (JInt _) (JInt _) = True
 typesMatch (JArray _) (JArray _) = True
 typesMatch (JStack _) (JStack _) = True
+typesMatch (JBool _) (JBool _)   = True
 typesMatch _ _ = False
 
 nil = JStack []
@@ -65,30 +67,33 @@ truthy _           = True
 boolToInt :: Num a => (a -> a -> Bool) -> a -> a -> a
 boolToInt f x y = if f x y then 1 else 0
 
+wrap :: (a -> Value) -> (Integer -> Integer -> a) -> Integer -> Integer -> Value
+wrap m f x y = m $ f x y
 
-opFunc :: (Integral a, Bits a) => BinOp -> a -> a -> a
-opFunc Add  = (+)
-opFunc Sub  = (-)
-opFunc Mul  = (*)
-opFunc Div  = div
-opFunc Mod  = mod
-opFunc And  = (.&.)
-opFunc Or   = (.|.)
-opFunc Xor  = xor
+
+opFunc :: BinOp -> Integer -> Integer -> Value
+opFunc Add  = wrap JInt (+)
+opFunc Sub  = wrap JInt (-)
+opFunc Mul  = wrap JInt (*)
+opFunc Div  = wrap JInt div
+opFunc Mod  = wrap JInt mod
+opFunc And  = wrap JInt (.&.)
+opFunc Or   = wrap JInt (.|.)
+opFunc Xor  = wrap JInt xor
 opFunc LAnd = undefined -- handled by evalExpr
 opFunc LOr  = undefined -- handled by evalExpr
-opFunc GT   = boolToInt (>)
-opFunc LT   = boolToInt (<)
-opFunc EQ   = boolToInt (==)
-opFunc NEQ  = boolToInt (/=)
-opFunc GE   = boolToInt (>=)
-opFunc LE   = boolToInt (<=)
+opFunc GT   = wrap JBool (>)
+opFunc LT   = wrap JBool (<)
+opFunc EQ   = wrap JBool (==)
+opFunc NEQ  = wrap JBool (/=)
+opFunc GE   = wrap JBool (>=)
+opFunc LE   = wrap JBool (<=)
 
 performOperation :: BinOp -> Value -> Value -> SourcePos -> SourcePos -> Eval Value
 performOperation Div (JInt _) (JInt 0) _ pos =
   pos <!!> divisionByZero
 performOperation op (JInt x) (JInt y) _ _ =
-  return $ JInt $ opFunc op x y
+  return $ opFunc op x y
 performOperation _ (JInt _) val _ pos =
   pos <!!> typeMismatch ["int"] (showValueType val)
 performOperation _ val _ pos _ =
