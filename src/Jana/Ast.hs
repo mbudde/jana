@@ -6,10 +6,12 @@ import Text.Parsec.Pos
 data Type
     = Int SourcePos
     | Stack SourcePos
+    | BoolT SourcePos
 
 instance Eq Type where
   (Int _)   == (Int _)   = True
   (Stack _) == (Stack _) = True
+  (BoolT _) == (BoolT _) = True
   _         == _         = False
 
 -- Identifier
@@ -58,6 +60,7 @@ data Stmt
 -- Expression
 data Expr
     = Number   Integer SourcePos
+    | Boolean  Bool SourcePos
     | LV       Lval SourcePos
     | BinOp    BinOp Expr Expr
     | Empty    Ident SourcePos
