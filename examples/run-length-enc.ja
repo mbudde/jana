@@ -1,6 +1,6 @@
 // run-length encoding
 
-procedure encode(int text, int arc)
+procedure encode(int text[], int arc[])
     local int i = 0
     local int j = 0
         from i = 0 && j = 0 loop
