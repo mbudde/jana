@@ -41,6 +41,9 @@ janaDef = Token.LanguageDef {
               , Token.reservedNames    = [ "procedure"
                                          , "int"
                                          , "stack"
+                                         , "bool"
+                                         , "true"
+                                         , "false"
                                          , "if"
                                          , "then"
                                          , "else"
@@ -268,6 +271,7 @@ addPos parser = do pos <- getPosition
 term :: Parser Expr
 term =   parens expression
      <|> addPos numberExpr
+     <|> addPos boolExpr
      <|> addPos lvalExpr
      <|> addPos emptyExpr
      <|> addPos topExpr
@@ -277,6 +281,10 @@ term =   parens expression
 
 numberExpr :: Parser (SourcePos -> Expr)
 numberExpr = liftM Number integer
+
+boolExpr :: Parser (SourcePos -> Expr)
+boolExpr =   (reserved "true"  >> return (Boolean True))
+         <|> (reserved "false" >> return (Boolean False))
 
 lvalExpr :: Parser (SourcePos -> Expr)
 lvalExpr = liftM LV lval

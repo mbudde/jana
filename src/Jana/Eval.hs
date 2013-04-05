@@ -55,10 +55,14 @@ unpackStack :: SourcePos -> Value -> Eval Stack
 unpackStack _ (JStack x) = return x
 unpackStack pos val = pos <!!> typeMismatch ["stack"] (showValueType val)
 
+unpackBool :: SourcePos -> Value -> Eval Bool
+unpackBool _ (JBool x) = return x
+unpackBool pos val = pos <!!> typeMismatch ["bool"] (showValueType val)
+
 assert :: Bool -> Expr -> Eval ()
 assert bool expr =
-  do val1 <- evalModularExpr expr
-     unless (truthy val1 == bool) $
+  do val1 <- unpackBool (getExprPos expr) =<< evalModularExpr expr
+     unless (val1 == bool) $
        getExprPos expr <!!> assertionFail ("should be " ++ map toLower (show bool))
 
 assertTrue = assert True
@@ -100,12 +104,13 @@ arrayModify arr idx val = xs ++ val : ys
 
 
 getExprPos :: Expr -> SourcePos
-getExprPos (Number _ pos) = pos
-getExprPos (LV _ pos)     = pos
-getExprPos (BinOp _ e1 _) = getExprPos e1
-getExprPos (Empty _ pos)  = pos
-getExprPos (Top _ pos)    = pos
-getExprPos (Nil pos)      = pos
+getExprPos (Number _ pos)  = pos
+getExprPos (Boolean _ pos) = pos
+getExprPos (LV _ pos)      = pos
+getExprPos (BinOp _ e1 _)  = getExprPos e1
+getExprPos (Empty _ pos)   = pos
+getExprPos (Top _ pos)     = pos
+getExprPos (Nil pos)       = pos
 
 
 runProgram :: String -> Program -> EvalOptions -> IO ()
@@ -180,8 +185,8 @@ evalStmts = mapM_ (\stmt -> inStatement stmt $ evalStmt stmt)
 evalStmt :: Stmt -> Eval ()
 evalStmt (Assign modOp lval expr pos) = assignLval modOp lval expr pos
 evalStmt (If e1 s1 s2 e2 _) =
-  do val1 <- evalModularExpr e1 -- XXX: int required?
-     if truthy val1
+  do val1 <- unpackBool (getExprPos e1) =<< evalModularExpr e1 -- XXX: int required?
+     if val1
        then do evalStmts s1
                assertTrue e2
        else do evalStmts s2
@@ -190,8 +195,8 @@ evalStmt (From e1 s1 s2 e2 _) =
   do assertTrue e1
      evalStmts s1
      loop
-  where loop = do val <- evalModularExpr e2
-                  unless (truthy val) loopRec
+  where loop = do val <- unpackBool (getExprPos e2) =<< evalModularExpr e2
+                  unless val loopRec
         loopRec = do evalStmts s2
                      assertFalse e1
                      evalStmts s1
@@ -263,23 +268,20 @@ evalModularExpr :: Expr -> Eval Value
 evalModularExpr expr = evalExpr expr >>= numberToModular
 
 evalExpr :: Expr -> Eval Value
-evalExpr (Number x _) = return $ JInt x
-evalExpr (Nil _)      = return nil
-evalExpr expr@(LV lval _)  = inExpression expr $ evalLval lval
+evalExpr (Number x _)       = return $ JInt x
+evalExpr (Boolean b _)      = return $ JBool b
+evalExpr (Nil _)            = return nil
+evalExpr expr@(LV lval _)   = inExpression expr $ evalLval lval
 evalExpr (BinOp LAnd e1 e2) =
-  do x <- evalExpr e1
-     if truthy x
-       then do y <- evalExpr e2
-               if truthy y then return $ JInt 1
-                           else return $ JInt 0
-       else return $ JInt 0
+  do x <- unpackBool (getExprPos e1) =<< evalExpr e1
+     if x
+       then liftM JBool (unpackBool (getExprPos e2) =<< evalExpr e2)
+       else return $ JBool False
 evalExpr (BinOp LOr e1 e2) =
-  do x <- evalExpr e1
-     if truthy x
-       then return $ JInt 1
-       else do y <- evalExpr e2
-               if truthy y then return $ JInt 1
-                           else return $ JInt 0
+  do x <- unpackBool (getExprPos e1) =<< evalExpr e1
+     if x
+       then return $ JBool True
+       else liftM JBool $ unpackBool (getExprPos e2) =<< evalExpr e2
 evalExpr expr@(BinOp op e1 e2) = inExpression expr $
   do x <- evalExpr e1
      y <- evalExpr e2
