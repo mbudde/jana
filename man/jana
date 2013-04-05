@@ -1,14 +1,17 @@
 .\" Manpage for Jana, an interpreter for the reversible programming language Janus.
 .\" Contact kalusn@gmail.com to correct errors or typos in manpage.
-.TH man 8 "05 April 2013" "2.0" "jana man page"
+.TH JANA 1 "05 April 2013" "2.0" "jana man page"
 .SH NAME
-Jana, run programs written in Janus.
+jana -- run programs written in Janus.
 .SH SYNOPSIS
-jana [-m] [file]
+jana [\fB-m\fP] [file \fU...\fP]
 .SH DESCRIPTION
 Jana is an interpreter for Janus written in haskell. More information about the Janus language can be found in the article at http://dl.acm.org/citation.cfm?id=1244404.
 .SH OPTIONS
--m        Use 32-bit modular integer values instead of infinite numbers.
+The options are as follows:
+.TP
+-m
+Use 32-bit modular integer values instead of infinite numbers.
 .SH SEE ALSO
 http://topps.diku.dk/pirc/janus/intro.html
 .SH BUGS
