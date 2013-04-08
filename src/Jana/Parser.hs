@@ -255,7 +255,7 @@ errorStmt :: Parser Stmt
 errorStmt =
   do pos <- getPosition
      reserved "error"
-     liftM (flip UserError pos) stringLit
+     liftM (flip UserError pos) (parens stringLit)
 
 skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> liftM Skip getPosition
