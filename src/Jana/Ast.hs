@@ -34,6 +34,10 @@ data ModOp
     | XorEq -- ^=
     deriving (Eq, Show)
 
+data UnaryOp
+    = Not
+    deriving (Eq, Ord)
+
 -- Binary operators
 data BinOp
     = Add | Sub | Mul | Div | Mod     -- Arithmetic (+ - * / %)
@@ -62,6 +66,7 @@ data Expr
     = Number   Integer SourcePos
     | Boolean  Bool SourcePos
     | LV       Lval SourcePos
+    | UnaryOp  UnaryOp Expr
     | BinOp    BinOp Expr Expr
     | Empty    Ident SourcePos
     | Top      Ident SourcePos

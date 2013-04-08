@@ -272,12 +272,15 @@ evalExpr (Number x _)       = return $ JInt x
 evalExpr (Boolean b _)      = return $ JBool b
 evalExpr (Nil _)            = return nil
 evalExpr expr@(LV lval _)   = inExpression expr $ evalLval lval
-evalExpr (BinOp LAnd e1 e2) =
+evalExpr expr@(UnaryOp Not e) = inExpression expr $
+  do x <- unpackBool (getExprPos e) =<< evalExpr e
+     return $ JBool $ not x
+evalExpr expr@(BinOp LAnd e1 e2) = inExpression expr $
   do x <- unpackBool (getExprPos e1) =<< evalExpr e1
      if x
        then liftM JBool (unpackBool (getExprPos e2) =<< evalExpr e2)
        else return $ JBool False
-evalExpr (BinOp LOr e1 e2) =
+evalExpr expr@(BinOp LOr e1 e2) = inExpression expr $
   do x <- unpackBool (getExprPos e1) =<< evalExpr e1
      if x
        then return $ JBool True
