@@ -82,6 +82,7 @@ brackets   = Token.brackets   lexer -- parses brackets
 integer    = Token.integer    lexer -- parses an integer
 semi       = Token.semi       lexer -- parses a semicolon
 comma      = Token.comma      lexer -- parses a comma
+symbol     = Token.symbol     lexer
 whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
 identifier :: Parser Ident
@@ -308,7 +309,9 @@ topExpr =
 sizeExpr :: Parser (SourcePos -> Expr)
 sizeExpr = reserved "size" >> liftM Size (parens identifier)
 
-binOperators = [ [ binop  "*"   Mul
+binOperators = [ [ notChain
+                 ]
+               , [ binop  "*"   Mul
                  , binop  "/"   Div
                  , binop  "%"   Mod
                  ]
@@ -333,6 +336,8 @@ binOperators = [ [ binop  "*"   Mul
   where binop  op f     = Infix (reservedOp op >> return (BinOp f)) AssocLeft
         binop' op f not = Infix (try $ reservedOp op >> notFollowedBy (char not) >>
                                        return (BinOp f)) AssocLeft
+        notChain        = Prefix $ chainl1 notOp $ return (.)
+        notOp           = symbol "!" >> return (UnaryOp Not)
 
 parseString :: Parser a -> String -> a
 parseString parser str =

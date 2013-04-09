@@ -26,7 +26,10 @@ formatModOp XorEq = text "^="
 
 -- Operators and their precedence
 -- Should match the operator table in Jana.Parser
-opMap = Map.fromList [
+unaryOpMap = Map.fromList [
+    (Not,  ("!",  5))
+  ]
+binOpMap = Map.fromList [
     (Mul , ("*",  4))
   , (Div , ("/",  4))
   , (Mod , ("%",  4))
@@ -50,7 +53,8 @@ opMap = Map.fromList [
   ]
 
 
-formatBinOp = text . fst . (opMap Map.!)
+formatUnaryOp = text . fst . (unaryOpMap Map.!)
+formatBinOp = text . fst . (binOpMap Map.!)
 
 
 formatExpr = f 0
@@ -62,10 +66,14 @@ formatExpr = f 0
         f _ (Top id _)        = text "top" <> parens (formatIdent id)
         f _ (Size id _)       = text "size" <> parens (formatIdent id)
         f _ (Nil _)           = text "nil"
+        f d (UnaryOp op e)    =
+          let opd = unaryOpPrec op in
+            parens' (d > opd) (formatUnaryOp op <> f opd e)
         f d (BinOp op e1 e2)  =
-          let opd = opPrec op in
+          let opd = binOpPrec op in
             parens' (d > opd) (f opd e1 <+> formatBinOp op <+> f opd e2)
-        opPrec = snd . (opMap Map.!)
+        unaryOpPrec  = snd . (unaryOpMap Map.!)
+        binOpPrec    = snd . (binOpMap Map.!)
         parens' bool = if bool then parens else id
 
 
