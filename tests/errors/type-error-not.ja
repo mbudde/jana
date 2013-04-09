@@ -1,0 +1,4 @@
+procedure main()
+    if !5 then
+        skip
+    fi false
