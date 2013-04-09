@@ -98,18 +98,25 @@ program =
      return $ Program mains procs
 
 genProcedure :: Parser (Either ProcMain Proc)
-genProcedure =     try (liftM Left mainProcedure)
-               <|> liftM Right procedure
-
-mainProcedure :: Parser ProcMain
-mainProcedure =
+genProcedure =
   do reserved "procedure"
-     pos <- getPosition
-     reserved "main"
-     parens whiteSpace
+     id <- identifier
+     case id of
+       (Ident "main" pos) -> liftM Left  $ mainProcedure pos
+       _                  -> liftM Right $ procedure id
+
+mainProcedure :: SourcePos -> Parser ProcMain
+mainProcedure pos =
+  do parens whiteSpace
      vdecls <- many vdecl
      stats  <- many1 statement
      return $ ProcMain vdecls stats pos
+
+procedure :: Ident -> Parser Proc
+procedure name =
+  do params <- parens $ sepBy vdecl comma
+     stats  <- many1 statement
+     return Proc { procname = name, params = params, body = stats }
 
 vdecl :: Parser Vdecl
 vdecl =
@@ -121,19 +128,6 @@ vdecl =
                   <|> return (Scalar mytype ident pos)
        _       -> return $ Scalar mytype ident pos
 
-procedure :: Parser Proc
-procedure =
-  do reserved "procedure"
-     name   <- identifier
-     params <- parens $ sepBy vdecl comma
-     stats  <- many1 statement
-     return Proc { procname = name, params = params, body = stats }
-
-parameter :: Parser (Type, Ident)
-parameter =
-  do mytype <- atype
-     ident  <- identifier
-     return (mytype, ident)
 
 statement :: Parser Stmt
 statement =   try assignStmt
