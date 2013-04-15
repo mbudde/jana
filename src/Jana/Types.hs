@@ -175,7 +175,8 @@ checkDuplicateArgs (arg:args) =
 
 getProc :: Ident -> Eval Proc
 getProc (Ident funName pos) =      -- FIXME: calling main?
-  do procEnv <- asks procEnv
+  do when (funName == "main") $ pos <!!> callingMainError
+     procEnv <- asks procEnv
      case Map.lookup funName procEnv of
        Just proc -> return proc
        Nothing   -> pos <!!> undefProc funName

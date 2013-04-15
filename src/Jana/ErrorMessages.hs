@@ -78,6 +78,10 @@ procDefined :: (Identifiable a) => a -> Message
 procDefined id = Message $
   printf "Procedure `%s' is already defined" (ident id)
 
+callingMainError :: Message
+callingMainError = Message $
+  "It is not allowed to call the `main' procedure"
+
 argumentError :: (Identifiable a, PrintfArg b) => a -> b -> b -> Message
 argumentError id expect actual = Message $
   printf "Procedure `%s' expects %d argument(s) but got %d"
