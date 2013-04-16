@@ -23,6 +23,7 @@ import qualified Data.Map as Map
 
 import Text.Parsec.Pos
 
+import Jana.Aliases
 import Jana.Ast
 import Jana.Error
 import Jana.ErrorMessages
@@ -143,7 +144,9 @@ getVar (Ident name pos) =
        Just val -> return val
        Nothing  -> pos <!!> unboundVar name
 
-data EvalEnv = EE { evalOptions :: EvalOptions,  procEnv :: ProcEnv }
+data EvalEnv = EE { evalOptions :: EvalOptions
+                  , procEnv :: ProcEnv
+                  , aliases :: AliasSet }
 
 data EvalOptions = EvalOptions { modInt :: Bool, runReverse :: Bool }
 defaultOptions   = EvalOptions { modInt = False, runReverse = False }

@@ -18,6 +18,7 @@ import Text.Printf (printf)
 
 import Text.Parsec.Pos
 
+import Jana.Aliases
 import Jana.Ast
 import Jana.Types
 import Jana.Invert
@@ -149,7 +150,7 @@ evalProc proc args =
      oldStoreEnv <- get
      put emptyStore
      bindArgs (params proc) values (procPos proc)
-     evalStmts $ body proc
+     local (updateAliases (map ident args) (params proc)) (evalStmts $ body proc)
      newValues <- mapM (getVar . getVdeclIdent) (params proc)
      put oldStoreEnv
      mapM_ (uncurry setVar) (zip args newValues)
@@ -165,6 +166,9 @@ evalProc proc args =
         procPos Proc { procname = Ident _ pos } = pos
         getVdeclIdent (Scalar _ id _) = id
         getVdeclIdent (Array id _ _)  = id
+        updateAliases args params env =
+          let xs = zip args (map ident params) in
+            env { aliases = mergeAliases xs (aliases env) }
 
 
 assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
