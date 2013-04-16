@@ -118,9 +118,12 @@ runProgram _ (Program [main] procs) evalOptions =
   case procEnvFromList procs of
     Left err -> print err
     Right procEnv ->
-      case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
-        Right (_, s) -> putStrLn $ showStore s
-        Left err     -> print err
+      let env = EE { procEnv = procEnv
+                   , evalOptions = evalOptions }
+      in do runRes <- runEval (evalMain main) emptyStore env
+            case runRes of
+              Right (_, s) -> putStrLn $ showStore s
+              Left err     -> print err
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
 runProgram filename (Program _ _) _ =
