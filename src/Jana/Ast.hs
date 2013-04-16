@@ -106,6 +106,10 @@ instance Identifiable Lval where
   ident (Var id) = ident id
   ident (Lookup id _) = ident id
 
+instance Identifiable Vdecl where
+  ident (Scalar _ id _) = ident id
+  ident (Array id _ _) = ident id
+
 instance Identifiable ProcMain where
   ident _ = "main"
 
