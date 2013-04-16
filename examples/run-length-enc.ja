@@ -20,8 +20,8 @@ procedure encode(int text[], int arc[])
             j -= 2
             i -= arc[j+1]
         until i = 0
-    delocal int i = 0
     delocal int j = 0
+    delocal int i = 0
 
 procedure main()
     int text[7]
