@@ -58,6 +58,7 @@ data Stmt
     | Uncall   Ident [Ident] SourcePos
     | UserError String SourcePos
     | Swap     Ident Ident SourcePos
+    | Prints   Prints SourcePos
     | Skip SourcePos
     deriving (Eq)
 
@@ -71,13 +72,19 @@ data Expr
     | Empty    Ident SourcePos
     | Top      Ident SourcePos
     | Size     Ident SourcePos
-    | Nil SourcePos
+    | Nil      SourcePos
     deriving (Eq)
 
 -- Declaration
 data Vdecl
     = Scalar Type Ident SourcePos
     | Array  Ident (Maybe Integer) SourcePos
+    deriving (Eq)
+
+data Prints
+    = Print String SourcePos
+    | Printf String [Ident] SourcePos
+    | Show [Ident] SourcePos
     deriving (Eq)
 
 -- Main procedure
