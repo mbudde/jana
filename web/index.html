@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Janus Playground</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link href="static/css/bootstrap.css" rel="stylesheet">
+    <link href="static/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="static/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <style type="text/css" media="screen">
+        #editor { 
+            position: absolute;
+            font-size: 15px;
+            top: 40px;
+            right: 40%;
+            bottom: 0;
+            left: 0;
+        }
+        #output {
+            padding: 8px;
+            position: absolute;
+            font-size: 15px;
+            top: 40px;
+            right: 0;
+            bottom: 0;
+            left: 60%;
+        }
+        .navbar li button {
+          margin-left: 10px;
+          margin-right: 10px;
+        }
+    </style>
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Janus Playground</a>
+          <ul class="nav pull-right">
+            <li><button class="btn btn-success"><i class="icon-play-circle icon-white"></i> Run</button></button></li>
+            <li><a href="#about"><i class="icon-wrench"></i> Options</a></li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                Examples
+                <b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Fibonacci</a></li>
+                <li><a href="#">Factorization</a></li>
+                <li><a href="#">Squre-root</a></li>
+                <li><a href="#">Perm-to-code</a></li>
+                <li><a href="#">Run-length-encoding</a></li>
+              </ul>
+            </li>
+            <li><a href="#about" data-toggle="modal">About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="editor">// Calculating fibonacci numbers
+
+procedure fib(int x1, int x2, int n)
+    if n = 0 then
+        x1 += 1
+        x2 += 1
+    else
+        n -= 1
+        call fib(x1, x2, n)
+        x1 += x2
+        x1 <=> x2
+    fi x1 = x2
+
+procedure main()
+    int x1
+    int x2
+    int n
+    n += 4
+    call fib(x1, x2, n)
+    </div>
+    <div id="output">
+      <pre>n = 0
+x1 = 5
+x2 = 8</pre>
+    </div>
+
+    <div id="about" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>About the Janus Playground</h3>
+      </div>
+      <div class="modal-body">
+        <p>The Playground lets you try out the Janus programming language in your browser without having to install anything. When you click "Run" the program is sent to the server where it is executed and the result is returned.</p>
+        <p>The Janus Playground has been created by Claus Skou Nielsen and Michael Budde as part of their Bachelor Thesis.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+      </div>
+    </div>
+
+    <script src="static/js/jquery.js"></script>
+    <script src="static/js/bootstrap.js"></script>
+    <script src="http://rawgithub.com/ajaxorg/ace-builds/master/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/github");
+        //editor.getSession().setMode("ace/mode/javascript");
+    </script>
+  </body>
+</html>
