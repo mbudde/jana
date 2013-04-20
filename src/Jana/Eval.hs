@@ -113,6 +113,10 @@ getExprPos (Top _ pos)     = pos
 getExprPos (Nil pos)       = pos
 
 
+printfInsertVars :: String -> [Ident] -> String
+printfInsertVars = undefined
+
+
 runProgram :: String -> Program -> EvalOptions -> IO ()
 runProgram _ (Program [main] procs) evalOptions =
   case procEnvFromList procs of
@@ -251,6 +255,14 @@ evalStmt (Swap id1 id2 pos) =
        else pos <!!> swapTypeError (showValueType val1) (showValueType val2)
 evalStmt (UserError msg pos) =
   pos <!!> userError msg
+
+evalStmt (Prints (Print msg ppos) pos) =
+  liftIO $ putStrLn msg
+
+evalStmt (Prints (Printf msg [] ppos) pos) = evalStmt $ Prints (Print msg ppos) pos
+evalStmt (Prints (Printf msg vars ppos) pos) = undefined
+
+evalStmt (Prints (Show vars ppos) pos) = undefined
 
 evalStmt (Skip _) = return ()
 

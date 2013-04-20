@@ -1,0 +1,6 @@
+procedure main()
+  int x
+  int y
+  x += 8
+  y += 13
+  show(x,y)
