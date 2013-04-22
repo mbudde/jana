@@ -109,6 +109,8 @@ instance Show JanaError where
             case (sourceName pos, sourceLine pos, sourceColumn pos) of
               ("", 0, 0)        -> "Error"
               (file, 0, 0)      -> "File \"" ++ file ++ "\""
+              ("-", line, col) ->
+                printf "Error in line %d, column %d" line col
               (file, line, col) ->
                 printf "File \"%s\" in line %d, column %d" file line col
           msgs = errorMessages err
