@@ -21,7 +21,7 @@
             font-size: 15px;
             top: 40px;
             right: 0;
-            bottom: 160px;
+            bottom: 0;
             left: 0;
         }
         #output {
@@ -34,6 +34,8 @@
             left: 0;
             border-top: 3px solid #ccc;
             background-color: #eee;
+            overflow: auto;
+            display: none;
         }
         .navbar li button {
           margin-left: 10px;
@@ -50,7 +52,7 @@
         <div class="container">
           <a class="brand" href="#">Janus Playground</a>
           <ul class="nav pull-right">
-            <li><button class="btn btn-success"><i class="icon-play-circle icon-white"></i> Run</button></button></li>
+            <li><button id="run" class="btn btn-success"><i class="icon-play-circle icon-white"></i> Run</button></button></li>
             <li><a href="#about"><i class="icon-wrench"></i> Options</a></li>
             <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -72,11 +74,7 @@
     </div>
 
     <div id="editor"></div>
-    <div id="output">
-      <pre>n = 0
-x1 = 5
-x2 = 8</pre>
-    </div>
+    <div id="output"></div>
 
     <div id="about" class="modal hide fade">
       <div class="modal-header">
@@ -116,6 +114,18 @@ x2 = 8</pre>
 
         $("#examples a").click(function(e) {
           showExample(e.target.hash);
+        });
+
+        $("#run").click(function() {
+          $("#output").empty().html("Executing...").show();
+          $("#editor").css("bottom", "160px");
+          editor.resize();
+          var code = editor.getValue();
+          $.post("execute.php", {
+            "code": code
+          }, function(res) {
+            $("#output").empty().append($("<pre>").html(res));
+          });
         });
 
         showExample(window.location.hash);
