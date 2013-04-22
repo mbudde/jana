@@ -1,5 +1,6 @@
 module Jana.Parser (
     parseExprString, parseStmtsString, parseString, parseFile,
+    parseProgram
     ) where
 
 import Prelude hiding (GT, LT, EQ)
@@ -357,3 +358,9 @@ parseFile file =
      case parse program file str of
        Left e  -> return $ Left $ toJanaError e
        Right r -> return $ Right r
+
+parseProgram :: String -> String -> Either JanaError Program
+parseProgram filename text =
+  case parse program filename text of
+    Left e  -> Left $ toJanaError e
+    Right r -> Right r
