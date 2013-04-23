@@ -92,11 +92,11 @@
 
     <script src="static/js/jquery.js"></script>
     <script src="static/js/bootstrap.js"></script>
-    <script src="http://rawgithub.com/ajaxorg/ace-builds/master/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="static/js/ace/ace.js"></script>
     <script>
       $(function(){
         editor = ace.edit("editor");
-        editor.setTheme("ace/theme/github");
+        editor.setTheme("ace/theme/tomorrow");
         editor.setShowPrintMargin(false);
         editor.getSession().setTabSize(4);
         editor.getSession().setUseSoftTabs(true);
