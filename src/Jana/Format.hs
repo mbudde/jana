@@ -142,7 +142,7 @@ formatStmt (Prints (Printf str []) _) =
   text "printf" <> parens (text (show str))
 
 formatStmt (Prints (Printf str idents) _) =
-  text "printf" <> parens (text (show str) <> comma <+> (commasep $ map formatIdent idents))
+  text "printf" <> parens (text (show str) <> comma <+> commasep $ map formatIdent idents)
 
 formatStmt (Prints (Show idents) _) =
   text "show" <> parens (commasep $ map formatIdent idents)
