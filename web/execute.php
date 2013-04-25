@@ -1,16 +1,20 @@
 <?php
 
 
-$prog_text = $_POST['code'];
+$prog_text = $_POST["code"];
+$jana_flags = array();
 
+if (isset($_POST["intsize"]) && $_POST["intsize"] === "32") {
+  array_push($jana_flags, "-m");
+}
 
 $descriptorspec = array(
    0 => array("pipe", "r"),
    1 => array("pipe", "w")
 );
 
-$cmd = dirname(__FILE__) . '/../jana -';
-$cwd = '/tmp';
+$cmd = dirname(__FILE__) . "/../jana " . implode(" ", $jana_flags) . " -";
+$cwd = "/tmp";
 $env = array();
 
 $process = proc_open($cmd, $descriptorspec, $pipes, $cwd, $env);

@@ -48,8 +48,10 @@ $(function(){
     $("#editor").css("bottom", "160px");
     editor.resize();
     var code = editor.getValue();
+    var intSize = $("#options input[name='options-int-size']:checked").val();
     $.post("execute.php", {
-      "code": code
+      "code": code,
+      "intsize": intSize
     }, function(res) {
       $("#output").empty().append(formatOutput(res));
     });

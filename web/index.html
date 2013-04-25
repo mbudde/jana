@@ -27,7 +27,7 @@
           <a class="brand" href="#">Janus Playground</a>
           <ul class="nav pull-right">
             <li><button id="run" class="btn btn-success"><i class="icon-play-circle icon-white"></i> Run</button></button></li>
-            <li><a href="#about"><i class="icon-wrench"></i> Options</a></li>
+            <li><a href="#options" data-toggle="modal"><i class="icon-wrench"></i> Options</a></li>
             <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                 Examples
@@ -58,6 +58,26 @@
       <div class="modal-body">
         <p>The Playground lets you try out the Janus programming language in your browser without having to install anything. When you click "Run" the program is sent to the server where it is executed and the result is returned.</p>
         <p>The Janus Playground has been created by Claus Skou Nielsen and Michael Budde as part of their Bachelor Thesis.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+      </div>
+    </div>
+
+    <div id="options" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>Options</h3>
+      </div>
+      <div class="modal-body">
+        <label class="radio">
+          <input type="radio" name="options-int-size" id="option-arbitrary-ints" value="arbitrary" checked>
+          Arbitrary size integers
+        </label>
+        <label class="radio">
+          <input type="radio" name="options-int-size" id="option-32bit-ints" value="32">
+          32-bit integers with modular arithmetic
+        </label>
       </div>
       <div class="modal-footer">
         <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
