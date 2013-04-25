@@ -11,14 +11,15 @@
     padding: 8px;
     position: absolute;
     font-size: 15px;
-    height: 141px;
+    height: 143px;
     right: 0;
     bottom: 0;
     left: 0;
-    border-top: 3px solid #ccc;
+    border-top: 1px solid #ccc;
     background-color: #eee;
     overflow: auto;
     display: none;
+    box-shadow: inset 0px 1px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar li button {
