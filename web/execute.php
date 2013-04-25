@@ -1,5 +1,6 @@
 <?php
 
+set_time_limit(30);
 
 $prog_text = $_POST["code"];
 $jana_flags = array();
