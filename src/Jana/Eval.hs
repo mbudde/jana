@@ -9,12 +9,11 @@ module Jana.Eval (
 import Prelude hiding (GT, LT, EQ, userError)
 import Data.Char (toLower)
 import Data.Map (fromList)
-import Data.List (genericSplitAt, genericReplicate)
+import Data.List (genericSplitAt, genericReplicate, findIndex, delete)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
 import Control.Monad.Reader
-import Text.Printf (printf)
 
 import Text.Parsec.Pos
 
@@ -113,9 +112,47 @@ getExprPos (Top _ pos)     = pos
 getExprPos (Nil pos)       = pos
 
 
-printfInsertVars :: String -> [Ident] -> String
-printfInsertVars = undefined
+printfRender :: [String] -> [(String, String)] -> Either Message String
+printfRender str [] =
+  case (findPercent (last str)) of
+    Just _ -> Left $ printfArgMismatch
+    Nothing -> Right $ concat str
+printfRender str vList@((var, varType):vars) =
+  case percentIndex of
+    Just idx ->
+      case typeStr `elem` acceptedTypes of
+        True -> if typeStr == varType
+                  then printfRender (init str ++ [insertVar var (take (idx+2) lastStr), (drop (idx+2) lastStr)]) vars
+                  else Left $ printfTypeMismatch typeStr varType
+        _ -> if typeChar == '%'
+               then printfRender (init str ++ [delete '%' (take (idx+2) lastStr), drop (idx+2) lastStr]) ((var, varType):vars)
+               else Left $ printfUnrecognizedType typeChar
+      where lastStr = last str
+            typeChar = (last str) !! (idx+1)      
+            acceptedTypes = ["int", "array", "bool"]
+            typeStr = correspondingType typeChar
+            
+    Nothing  -> if null vList
+                  then Right $ concat str                  
+                  else Left $ printfArgMismatch
+  where percentIndex = findPercent (last str)
+        insertVar :: String -> String -> String
+        insertVar var str =
+          concat [ take ((length str) - 2) str
+                 , var
+                 ]
 
+correspondingType :: Char -> String
+correspondingType typeChar =
+  case typeChar of
+    'd' -> "int"
+    'a' -> "array"
+    'b' -> "bool"
+    _   -> ""
+
+
+findPercent :: String -> Maybe Int
+findPercent str = findIndex (\x -> x == '%') str
 
 runProgram :: String -> Program -> EvalOptions -> IO ()
 runProgram _ (Program [main] procs) evalOptions =
@@ -256,13 +293,29 @@ evalStmt (Swap id1 id2 pos) =
 evalStmt (UserError msg pos) =
   pos <!!> userError msg
 
-evalStmt (Prints (Print msg ppos) pos) =
+evalStmt (Prints (Print msg) pos) =
   liftIO $ putStrLn msg
 
-evalStmt (Prints (Printf msg [] ppos) pos) = evalStmt $ Prints (Print msg ppos) pos
-evalStmt (Prints (Printf msg vars ppos) pos) = undefined
+evalStmt (Prints (Printf msg []) pos) = evalStmt $ Prints (Print msg) pos
+evalStmt (Prints (Printf msg vars) pos) =
+  do varList' <- varList
+     case printfRender [msg] varList' of
+       Right str -> liftIO $ putStrLn str
+       Left  err -> pos <!!> err
+  where varList =
+          mapM makeVarPair vars
+        makeVarPair var =
+          do val <- getVar var
+             return (show val, showValueType val)
 
-evalStmt (Prints (Show vars ppos) pos) = undefined
+evalStmt (Prints (Show vars) pos) =
+  do str <- mapM showVar vars
+     liftIO $ putStrLn $ showVars str
+  where showVar var =
+          do val <- getVar var
+             return $ show var ++ " = " ++ show val
+        showVars (var:[])   = var
+        showVars (var:vars) = var ++ ", " ++ showVars vars
 
 evalStmt (Skip _) = return ()
 

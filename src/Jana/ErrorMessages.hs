@@ -116,3 +116,11 @@ procDuplicateArgs id = Message $
 userError :: String -> Message
 userError msg = Message $ "User error: " ++ msg
 
+printfTypeMismatch :: String -> String -> Message
+printfTypeMismatch expected given = Message $ printf "Type mismatch in printf statement: Expected %s, given %s" expected given
+
+printfArgMismatch :: Message
+printfArgMismatch = Message "Number of arguments does not correspond with number of %<type char>"
+
+printfUnrecognizedType :: Char -> Message
+printfUnrecognizedType char = Message $ printf "Unrecognized type character: %c" char

@@ -1,5 +1,0 @@
-procedure main()
-  int x
-  x += 42
-  printf("The answer to life, the universe and everything is %d", foo)
-  printf("Printf statement with no variables should also be printed")

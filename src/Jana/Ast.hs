@@ -82,9 +82,9 @@ data Vdecl
     deriving (Eq)
 
 data Prints
-    = Print String SourcePos
-    | Printf String [Ident] SourcePos
-    | Show [Ident] SourcePos
+    = Print String
+    | Printf String [Ident]
+    | Show [Ident]
     deriving (Eq)
 
 -- Main procedure

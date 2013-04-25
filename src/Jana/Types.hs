@@ -48,6 +48,7 @@ showValueType :: Value -> String
 showValueType (JInt _) = "int"
 showValueType (JStack _) = "stack"
 showValueType (JArray _) = "array"
+showValueType (JBool _)  = "bool"
 
 typesMatch :: Value -> Value -> Bool
 typesMatch (JInt _) (JInt _) = True

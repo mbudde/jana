@@ -264,26 +264,23 @@ printsStmt =   liftM2 (flip Prints) getPosition printStmt
 
 printStmt :: Parser Prints
 printStmt =
-  do pos <- getPosition
-     reserved "print"
+  do reserved "print"
      str <- parens stringLit
-     return $ Print str pos
+     return $ Print str
 
 printfStmt :: Parser Prints
 printfStmt =
-  do pos <- getPosition
-     reserved "printf"
+  do reserved "printf"
      (a, b) <- parens $ do str <- stringLit
                            identList <- option [] $ comma >> sepBy1 identifier comma
                            return (str, identList)
-     return $ Printf a b pos
+     return $ Printf a b
 
 showStmt :: Parser Prints
 showStmt =
-  do pos  <- getPosition
-     reserved "show"
+  do reserved "show"
      identList <- parens $ sepBy1 identifier comma
-     return $ Show identList pos
+     return $ Show identList
 
 skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> liftM Skip getPosition
