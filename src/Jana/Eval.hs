@@ -114,33 +114,31 @@ getExprPos (Nil pos)       = pos
 
 printfRender :: [String] -> [(String, String)] -> Either Message String
 printfRender str [] =
-  case (findPercent (last str)) of
-    Just _ -> Left $ printfArgMismatch
+  case findPercent (last str) of
+    Just _ -> Left printfArgMismatch
     Nothing -> Right $ concat str
 printfRender str vList@((var, varType):vars) =
   case percentIndex of
-    Just idx ->
-      case typeStr `elem` acceptedTypes of
-        True -> if typeStr == varType
-                  then printfRender (init str ++ [insertVar var (take (idx+2) lastStr), (drop (idx+2) lastStr)]) vars
-                  else Left $ printfTypeMismatch typeStr varType
-        _ -> if typeChar == '%'
-               then printfRender (init str ++ [delete '%' (take (idx+2) lastStr), drop (idx+2) lastStr]) ((var, varType):vars)
-               else Left $ printfUnrecognizedType typeChar
+    Just idx | typeStr `elem` acceptedTypes ->
+                 if typeStr == varType
+                   then printfRender (init str ++ [insertVar var (take (idx + 2) lastStr), drop (idx + 2) lastStr]) vars
+                   else Left $ printfTypeMismatch typeStr varType
+             | typeChar == '%' ->
+                 printfRender (init str ++ [delete '%' (take (idx + 2) lastStr), drop (idx + 2) lastStr]) vList
+             | otherwise -> Left $ printfUnrecognizedType typeChar
+
       where lastStr = last str
-            typeChar = (last str) !! (idx+1)      
+            typeChar = last str !! (idx+1)      
             acceptedTypes = ["int", "array", "bool"]
             typeStr = correspondingType typeChar
             
     Nothing  -> if null vList
                   then Right $ concat str                  
-                  else Left $ printfArgMismatch
+                  else Left printfArgMismatch
   where percentIndex = findPercent (last str)
         insertVar :: String -> String -> String
         insertVar var str =
-          concat [ take ((length str) - 2) str
-                 , var
-                 ]
+          take (length str - 2) str ++  var
 
 correspondingType :: Char -> String
 correspondingType typeChar =
@@ -152,7 +150,7 @@ correspondingType typeChar =
 
 
 findPercent :: String -> Maybe Int
-findPercent str = findIndex (\x -> x == '%') str
+findPercent = elemIndex '%'
 
 runProgram :: String -> Program -> EvalOptions -> IO ()
 runProgram _ (Program [main] procs) evalOptions =
