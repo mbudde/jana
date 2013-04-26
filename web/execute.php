@@ -28,15 +28,17 @@ if (is_resource($process)) {
     fwrite($pipes[0], $prog_text);
     fclose($pipes[0]);
 
-    echo stream_get_contents($pipes[1]);
+    $output = stream_get_contents($pipes[1]);
     fclose($pipes[1]);
 
     $return_value = proc_close($process);
+
+    echo $return_value . "\n";
+
     if ($return_value === 124) {
       echo "Execution timed out!\n";
     }
-
-    echo "command returned $return_value\n";
+    echo $output;
 }
 
 ?>
