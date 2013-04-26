@@ -8,8 +8,7 @@ module Jana.Eval (
 
 import Prelude hiding (GT, LT, EQ, userError)
 import Data.Char (toLower)
-import Data.Map (fromList)
-import Data.List (genericSplitAt, genericReplicate, findIndex, delete)
+import Data.List (genericSplitAt, genericReplicate, delete, elemIndex)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
