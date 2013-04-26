@@ -26,6 +26,18 @@
     margin-right: 5px;
 }
 
+#output-pane .executing {
+    display: none;
+    font-weight: bold;
+    color: #666;
+}
+
+#output pre.error {
+    background-color: #eddddd;
+    border-color: #ff0000;
+    color: #600;
+}
+
 .navbar li button {
     margin-left: 10px;
     margin-right: 10px;
