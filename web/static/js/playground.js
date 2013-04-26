@@ -11,14 +11,22 @@ $(function(){
   var $output = $("#output");
   var $executing = $("#output-pane .executing");
 
-  function showExample(exampleId) {
-    var match = exampleId.match(/#examples\/([a-zA-Z0-9-]+)/);
+  function setEditorContent(code) {
+    editor.setValue(code);
+    editor.gotoLine(0);
+    removeErrorMarkers();
+  }
+
+  function loadCode(hash) {
+    var match = hash.match(/#examples\/([a-zA-Z0-9-]+)/);
     if (match) {
-      $.get("examples/" + match[1] + ".ja", function(data) {
-        editor.setValue(data);
-        editor.gotoLine(0);
-        removeErrorMarkers();
-      });
+      $.get("examples/" + match[1] + ".ja").done(setEditorContent);
+      return;
+    }
+
+    match = hash.match(/#([a-z0-9]{40})/);
+    if (match) {
+      $.get("load.php", {hash: match[1]}).done(setEditorContent);
     }
   }
 
@@ -71,8 +79,14 @@ $(function(){
     );
   }
 
+  function showOutputPane() {
+    $outputPane.show();
+    $editor.css("bottom", "160px");
+    editor.resize();
+  }
+
   $("#examples a").click(function(e) {
-    showExample(e.target.hash);
+    loadCode(e.target.hash);
   });
 
   $("#run").click(function() {
@@ -96,5 +110,15 @@ $(function(){
     editor.resize();
   });
 
-  showExample(window.location.hash);
+  $("#share").click(function() {
+    var code = editor.getValue();
+    $.post("save.php", {"code": editor.getValue()})
+    .done(function(res) {
+      var url = location.protocol+'//'+location.host+location.pathname+"#"+res;
+      $("#output").prepend("<p>Share this url: <input value=\""+url+"\"></p>");
+      showOutputPane();
+    });
+  });
+
+  loadCode(location.hash);
 });
