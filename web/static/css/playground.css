@@ -7,7 +7,7 @@
     left: 0;
 }
 
-#output {
+#output-pane {
     padding: 8px;
     position: absolute;
     font-size: 15px;
@@ -20,6 +20,10 @@
     overflow: auto;
     display: none;
     box-shadow: inset 0px 1px 10px rgba(0, 0, 0, 0.1);
+}
+
+#output-pane button.close {
+    margin-right: 5px;
 }
 
 .navbar li button {

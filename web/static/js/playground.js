@@ -44,7 +44,8 @@ $(function(){
   });
 
   $("#run").click(function() {
-    $("#output").empty().html("Executing...").show();
+    $("#output-pane").show();
+    $("#output").empty().html("Executing...");
     $("#editor").css("bottom", "160px");
     editor.resize();
     var code = editor.getValue();
@@ -55,6 +56,12 @@ $(function(){
     }, function(res) {
       $("#output").empty().append(formatOutput(res));
     });
+  });
+
+  $("#output-pane button.close").click(function() {
+    $("#output-pane").hide();
+    $("#editor").css("bottom", "0px");
+    editor.resize();
   });
 
   showExample(window.location.hash);
