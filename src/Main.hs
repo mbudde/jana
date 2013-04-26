@@ -52,7 +52,7 @@ parseAndRun :: String -> EvalOptions -> IO ()
 parseAndRun filename evalOptions =
   do text <- loadFile filename
      case parseProgram filename text of
-       Left err   -> print err
+       Left err   -> print err >> (exitWith $ ExitFailure 1)
        Right prog -> runProgram filename prog evalOptions
 
 main :: IO ()
