@@ -8,13 +8,16 @@ if (isset($_POST["intsize"]) && $_POST["intsize"] === "32") {
   array_push($jana_flags, "-m");
 }
 
+# Read program from stdin
+array_push($jana_flags, "-");
+
 $dir = dirname(__FILE__);
-$cmd = "$dir/../jana " . implode(" ", $jana_flags) . " -";
+$cmd = "$dir/../jana " . implode(" ", $jana_flags);
 
 $cwd = "/tmp";
 $descriptorspec = array(
-   0 => array("pipe", "r"),
-   1 => array("pipe", "w")
+    0 => array("pipe", "r"),
+    1 => array("pipe", "w")
 );
 $env = array();
 
