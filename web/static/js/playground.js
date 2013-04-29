@@ -55,7 +55,6 @@ $(function(){
     // First line contains the exit code
     var retval = parseInt(output.substr(0, output.indexOf("\n")));
     output = output.substring(output.indexOf("\n") + 1);
-    console.log(retval);
 
     removeErrorMarkers();
     if (retval > 0) {
