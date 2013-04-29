@@ -132,7 +132,7 @@ vdecl =
 
 
 statement :: Parser Stmt
-statement =   try assignStmt
+statement =   assignStmt
           <|> ifStmt
           <|> fromStmt
           <|> pushStmt
@@ -140,18 +140,20 @@ statement =   try assignStmt
           <|> localStmt
           <|> callStmt
           <|> uncallStmt
-          <|> try swapStmt
+          <|> swapStmt
           <|> errorStmt
           <|> skipStmt
           <?> "statement"
 
 assignStmt :: Parser Stmt
 assignStmt =
-  do lval  <- lval
-     pos   <- getPosition
-     modop <- modOp
+  do assign <- try $
+       do lv    <- lval
+          pos   <- getPosition
+          modop <- modOp
+          return $ flip (Assign modop lv) pos
      expr  <- expression
-     return $ Assign modop lval expr pos
+     return $ assign expr
 
 modOp :: Parser ModOp
 modOp =   (reservedOp "+=" >> return AddEq)
@@ -241,11 +243,13 @@ uncallStmt =
 
 swapStmt :: Parser Stmt
 swapStmt =
-  do ident1 <- identifier
-     pos   <- getPosition
-     reservedOp "<=>"
+  do swap <- try $
+       do ident1 <- identifier
+          pos    <- getPosition
+          reservedOp "<=>"
+          return $ flip (Swap ident1) pos
      ident2 <- identifier
-     return $ Swap ident1 ident2 pos
+     return $ swap ident2
 
 errorStmt :: Parser Stmt
 errorStmt =
@@ -286,14 +290,15 @@ lvalExpr :: Parser (SourcePos -> Expr)
 lvalExpr = liftM LV lval
 
 lval ::  Parser Lval
-lval =   try lookUp
-     <|> liftM Var identifier
+lval =
+  do ident <- identifier
+     lookup <- optionMaybe (brackets expression)
+     case lookup of
+       Just expr -> return $ Lookup ident expr
+       Nothing   -> return $ Var ident
 
 nilExpr :: Parser (SourcePos -> Expr)
 nilExpr = reserved "nil" >> return Nil
-
-lookUp :: Parser Lval
-lookUp = liftM2 Lookup identifier (brackets expression)
 
 emptyExpr :: Parser (SourcePos -> Expr)
 emptyExpr =
