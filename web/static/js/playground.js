@@ -109,12 +109,6 @@ $(function(){
     );
   }
 
-  function showOutputPane() {
-    $outputPane.show();
-    $editor.css("bottom", "160px");
-    editor.resize();
-  }
-
   $("#examples a").click(function(e) {
     loadCode(e.target.hash);
   });
