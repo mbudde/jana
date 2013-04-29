@@ -2,7 +2,7 @@
 
 $hash = $_GET["hash"];
 
-if (!isset($hash) || !preg_match('/^[a-z0-9]{40}$/', $hash)) {
+if (!isset($hash) || !preg_match('/^[a-z0-9]{8}$/', $hash)) {
     header("HTTP/1.1 400 Bad Request");
     echo "bad hash";
     exit;

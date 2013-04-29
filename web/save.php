@@ -1,7 +1,7 @@
 <?php
 
 $prog_text = $_POST["code"];
-$hash = sha1($prog_text);
+$hash = substr(sha1($prog_text), 0, 8);
 
 $res = file_put_contents(dirname(__FILE__) . "/programs/$hash.ja", $prog_text);
 

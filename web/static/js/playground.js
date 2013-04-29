@@ -24,7 +24,7 @@ $(function(){
       return;
     }
 
-    match = hash.match(/#([a-z0-9]{40})/);
+    match = hash.match(/#([a-z0-9]{8})/);
     if (match) {
       $.get("load.php", {hash: match[1]}).done(setEditorContent);
     }
