@@ -17,7 +17,15 @@ extra-source-files:  README.md
 
 executable jana
   main-is:           Main.hs
-  other-modules:     Jana.Ast, Jana.Parser, Jana.Eval, Jana.Types, Jana.Invert
+  other-modules:     Jana.Aliases
+                     Jana.Ast
+                     Jana.Error
+                     Jana.ErrorMessages
+                     Jana.Eval
+                     Jana.Format
+                     Jana.Invert
+                     Jana.Parser
+                     Jana.Types
   hs-source-dirs:    src
   build-depends:     base == 4.5.*,
                      parsec == 3.1.3,
