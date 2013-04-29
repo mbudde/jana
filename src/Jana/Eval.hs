@@ -120,7 +120,8 @@ runProgram _ (Program [main] procs) evalOptions =
     Left err -> print err
     Right procEnv ->
       let env = EE { procEnv = procEnv
-                   , evalOptions = evalOptions }
+                   , evalOptions = evalOptions
+                   , aliases = Jana.Aliases.empty }
       in do runRes <- runEval (evalMain main) emptyStore env
             case runRes of
               Right (_, s) -> putStrLn $ showStore s
@@ -172,15 +173,15 @@ evalProc proc args =
 
 
 assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
-assignLval modOp (Var id) expr _ =
-  do exprVal <- evalModularExpr expr
+assignLval modOp lv@(Var id) expr _ =
+  do exprVal <- evalModularAliasExpr lv expr
      varVal  <- getVar id
      performModOperation modOp varVal exprVal exprPos exprPos >>= setVar id
   where exprPos = getExprPos expr
 assignLval modOp (Lookup id idxExpr) expr pos =
   do idx    <- unpackInt exprPos =<< evalModularExpr idxExpr
      arr    <- unpackArray pos =<< getVar id
-     val    <- evalModularExpr expr
+     val    <- evalModularAliasExpr (Lookup id (Number idx exprPos)) expr
      oldval <- arrayLookup arr idx (getExprPos idxExpr)
      newval <- unpackInt pos =<< performModOperation modOp oldval val exprPos exprPos
      setVar id $ JArray $ arrayModify arr idx newval
@@ -258,10 +259,11 @@ evalStmt (UserError msg pos) =
 
 evalStmt (Skip _) = return ()
 
-evalLval :: Lval -> Eval Value
-evalLval (Var id) = getVar id
-evalLval (Lookup id@(Ident _ pos) e) =
-  do idx <- unpackInt (getExprPos e) =<< evalModularExpr e  -- FIXME: error
+evalLval :: Maybe Lval -> Lval -> Eval Value
+evalLval lv (Var id) = checkLvalAlias lv (Var id) >> getVar id
+evalLval lv (Lookup id@(Ident _ pos) e) =
+  do idx <- unpackInt (getExprPos e) =<< evalModularExpr e
+     checkLvalAlias lv (Lookup id (Number idx (getExprPos e)))
      arr <- unpackArray pos =<< getVar id
      arrayLookup arr idx pos
 
@@ -271,42 +273,69 @@ numberToModular (JInt x) =
      return $ JInt $ if flag then ((x + 2^31) `mod` 2^32) - 2^31 else x
 numberToModular val = return val
 
-evalModularExpr :: Expr -> Eval Value
-evalModularExpr expr = evalExpr expr >>= numberToModular
 
-evalExpr :: Expr -> Eval Value
-evalExpr (Number x _)       = return $ JInt x
-evalExpr (Boolean b _)      = return $ JBool b
-evalExpr (Nil _)            = return nil
-evalExpr expr@(LV lval _)   = inExpression expr $ evalLval lval
-evalExpr expr@(UnaryOp Not e) = inExpression expr $
-  do x <- unpackBool (getExprPos e) =<< evalExpr e
+evalModularExpr :: Expr -> Eval Value
+evalModularExpr expr = evalExpr Nothing expr >>= numberToModular
+
+evalModularAliasExpr :: Lval -> Expr -> Eval Value
+evalModularAliasExpr lv expr = evalExpr (Just lv) expr >>= numberToModular
+
+findAlias :: Ident -> Ident -> Eval ()
+findAlias id1 id2 =
+  do aliasSet <- asks aliases
+     when (isAlias aliasSet (ident id1) (ident id2)) $
+       (newPos "" 0 0) <!!> aliasError
+
+checkAlias :: Maybe Lval -> Ident -> Eval ()
+checkAlias Nothing _ = return ()
+checkAlias (Just (Var id)) id2 = findAlias id id2
+checkAlias (Just (Lookup id _)) id2 = findAlias id id2
+
+checkLvalAlias :: Maybe Lval -> Lval -> Eval ()
+checkLvalAlias Nothing _ = return ()
+checkLvalAlias (Just (Var id)) (Var id2) = findAlias id id2
+checkLvalAlias (Just (Var id)) (Lookup id2 _) = findAlias id id2
+checkLvalAlias (Just (Lookup id _)) (Var id2) = findAlias id id2
+checkLvalAlias (Just (Lookup id (Number n _))) (Lookup id2 (Number m _))
+  | n == m = findAlias id id2
+  | otherwise = return ()
+
+
+evalExpr :: Maybe Lval -> Expr -> Eval Value
+evalExpr _ (Number x _)       = return $ JInt x
+evalExpr _ (Boolean b _)      = return $ JBool b
+evalExpr _ (Nil _)            = return nil
+evalExpr lv expr@(LV val _)   = inExpression expr $ evalLval lv val
+evalExpr lv expr@(UnaryOp Not e) = inExpression expr $
+  do x <- unpackBool (getExprPos e) =<< evalExpr lv e
      return $ JBool $ not x
-evalExpr expr@(BinOp LAnd e1 e2) = inExpression expr $
-  do x <- unpackBool (getExprPos e1) =<< evalExpr e1
+evalExpr lv expr@(BinOp LAnd e1 e2) = inExpression expr $
+  do x <- unpackBool (getExprPos e1) =<< evalExpr lv e1
      if x
-       then liftM JBool (unpackBool (getExprPos e2) =<< evalExpr e2)
+       then liftM JBool (unpackBool (getExprPos e2) =<< evalExpr lv e2)
        else return $ JBool False
-evalExpr expr@(BinOp LOr e1 e2) = inExpression expr $
-  do x <- unpackBool (getExprPos e1) =<< evalExpr e1
+evalExpr lv expr@(BinOp LOr e1 e2) = inExpression expr $
+  do x <- unpackBool (getExprPos e1) =<< evalExpr lv e1
      if x
        then return $ JBool True
-       else liftM JBool $ unpackBool (getExprPos e2) =<< evalExpr e2
-evalExpr expr@(BinOp op e1 e2) = inExpression expr $
-  do x <- evalExpr e1
-     y <- evalExpr e2
+       else liftM JBool $ unpackBool (getExprPos e2) =<< evalExpr lv e2
+evalExpr lv expr@(BinOp op e1 e2) = inExpression expr $
+  do x <- evalExpr lv e1
+     y <- evalExpr lv e2
      performOperation op x y (getExprPos e1) (getExprPos e2)
-evalExpr expr@(Top id pos) = inArgument "top" (ident id) $
-  do stack <- unpackStack pos =<< getVar id
+evalExpr lv expr@(Top id pos) = inArgument "top" (ident id) $
+  do checkAlias lv id
+     stack <- unpackStack pos =<< getVar id
      case stack of
        (x:xs) -> return $ JInt x
        []     -> return nil
-evalExpr expr@(Empty id pos) = inArgument "empty" (ident id) $
-  do stack <- unpackStack pos =<< getVar id
+evalExpr lv expr@(Empty id pos) = inArgument "empty" (ident id) $
+  do checkAlias lv id
+     stack <- unpackStack pos =<< getVar id
      case stack of
        [] -> return $ JInt 1
        _  -> return $ JInt 0
-evalExpr expr@(Size id@(Ident _ pos) _) = inArgument "size" (ident id) $
+evalExpr _ expr@(Size id@(Ident _ pos) _) = inArgument "size" (ident id) $
   do boxedVal <- getVar id
      case boxedVal of
        JArray xs -> return $ JInt (toInteger $ length xs)

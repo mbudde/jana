@@ -1,11 +1,14 @@
 module Jana.Aliases (
   AliasSet,
   empty,
-  introduce, propagate, mergeAliases
+  introduce, propagate, mergeAliases,
+  isAlias
   ) where
 
 import Data.Maybe (catMaybes)
 import qualified Data.Set as Set
+
+import Jana.Ast
 
 
 type AliasSet = Set.Set (String, String)
@@ -33,3 +36,10 @@ propagate xs aliases = Set.foldr b empty aliases
 mergeAliases :: [(String, String)] -> AliasSet -> AliasSet
 mergeAliases xs aliases =
   introduce xs `Set.union` propagate xs aliases
+
+
+isAlias :: AliasSet -> String -> String -> Bool
+isAlias aliases id1 id2 =
+  id1 == id2 ||
+  (id1, id2) `Set.member` aliases ||
+  (id2, id1) `Set.member` aliases

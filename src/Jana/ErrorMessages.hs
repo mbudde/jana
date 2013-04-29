@@ -7,6 +7,9 @@ import Jana.Error
 import Jana.Ast
 
 
+aliasError :: Message
+aliasError = Message $
+  "Alias!"
 
 unboundVar :: String -> Message
 unboundVar name = Message $

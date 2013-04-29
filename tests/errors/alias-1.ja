@@ -2,7 +2,7 @@ procedure foo(int x, int y)
     call bar(x, y)
 
 procedure bar(int a, int b)
-    skip
+    a += b
 
 procedure main()
     int x
