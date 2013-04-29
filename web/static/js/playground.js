@@ -71,15 +71,25 @@ $(function(){
   }
 
   function showOutputPane() {
-    $outputPane.show();
-    $editor.css("bottom", $outputPane.outerHeight()+"px");
-    $editor.resize();
+    $outputPane.animate({
+      height: 160
+    }, {
+      duration: 200,
+      done: function() {
+        $editor.css("bottom", $outputPane.outerHeight()+"px");
+        editor.resize();
+      }
+    });
   }
 
   function hideOutputPane() {
-    $outputPane.hide();
     $editor.css("bottom", "0");
-    $editor.resize();
+    editor.resize();
+    $outputPane.animate({
+      height: 0
+    }, {
+      duration: 200
+    });
   }
 
   function formatOutput(output) {
@@ -115,11 +125,7 @@ $(function(){
 
   $("#run").click(runCode);
 
-  $("#output-pane button.close").click(function() {
-    $("#output-pane").hide();
-    $("#editor").css("bottom", "0px");
-    editor.resize();
-  });
+  $("#output-pane button.close").click(hideOutputPane);
 
   var sharePopoverVisible = false;
   $("#share").click(function(e) {
