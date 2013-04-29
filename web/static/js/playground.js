@@ -137,5 +137,9 @@ $(function(){
     }
   });
 
+  window.onbeforeunload = function() {
+    return "All your changes will be lost when you leave the site.";
+  };
+
   loadCode(location.hash);
 });
