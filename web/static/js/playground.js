@@ -11,14 +11,22 @@ $(function(){
   var $output = $("#output");
   var $executing = $("#output-pane .executing");
 
-  function showExample(exampleId) {
-    var match = exampleId.match(/#examples\/([a-zA-Z0-9-]+)/);
+  function setEditorContent(code) {
+    editor.setValue(code);
+    editor.gotoLine(0);
+    removeErrorMarkers();
+  }
+
+  function loadCode(hash) {
+    var match = hash.match(/#examples\/([a-zA-Z0-9-]+)/);
     if (match) {
-      $.get("examples/" + match[1] + ".ja", function(data) {
-        editor.setValue(data);
-        editor.gotoLine(0);
-        removeErrorMarkers();
-      });
+      $.get("examples/" + match[1] + ".ja").done(setEditorContent);
+      return;
+    }
+
+    match = hash.match(/#([a-z0-9]{8})/);
+    if (match) {
+      $.get("load.php", {hash: match[1]}).done(setEditorContent);
     }
   }
 
@@ -59,9 +67,9 @@ $(function(){
         session.addGutterDecoration(line, "errorGutter");
         prevErrors.push(line);
       }
-      $output.html($("<pre>").html(output).addClass("error"));
+      $output.html($("<pre>").text(output).addClass("error"));
     } else {
-      $output.html($("<pre>").html(output));
+      $output.html($("<pre>").text(output));
     }
   }
 
@@ -71,8 +79,14 @@ $(function(){
     );
   }
 
+  function showOutputPane() {
+    $outputPane.show();
+    $editor.css("bottom", "160px");
+    editor.resize();
+  }
+
   $("#examples a").click(function(e) {
-    showExample(e.target.hash);
+    loadCode(e.target.hash);
   });
 
   $("#run").click(function() {
@@ -96,5 +110,33 @@ $(function(){
     editor.resize();
   });
 
-  showExample(window.location.hash);
+  var sharePopoverVisible = false;
+  $("#share").click(function(e) {
+    var code = editor.getValue();
+    $.post("save.php", {"code": editor.getValue()})
+    .done(function(res) {
+      var url = location.protocol+'//'+location.host+location.pathname+"#"+res;
+      $("#share").popover({
+        title: "Share this URL",
+        content: "<input value=\""+url+"\" type=text size=40>",
+        placement: "bottom",
+        html: true,
+        trigger: "manual"
+      }).popover("show");
+      // Select input field in popover
+      $(".popover input").select();
+      // Prevent click event from bubbling up to document.
+      $(".popover").bind("click", function(e) { return false; });
+      sharePopoverVisible = true;
+    });
+    return false;
+  });
+
+  $(document).click(function() {
+    if (sharePopoverVisible) {
+      $("#share").popover("destroy");
+    }
+  });
+
+  loadCode(location.hash);
 });

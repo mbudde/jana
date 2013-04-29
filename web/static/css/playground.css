@@ -33,9 +33,13 @@
 }
 
 #output pre.error {
-    background-color: #eddddd;
-    border-color: #ff0000;
-    color: #600;
+    color: #b94a48;
+    background-color: #f2dede;
+    border-color: #eed3d7;
+}
+
+.popover input {
+    margin-top: 10px;
 }
 
 .navbar li button {
