@@ -38,6 +38,10 @@
     color: #600;
 }
 
+.popover input {
+    margin-top: 10px;
+}
+
 .navbar li button {
     margin-left: 10px;
     margin-right: 10px;

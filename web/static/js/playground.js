@@ -110,14 +110,32 @@ $(function(){
     editor.resize();
   });
 
-  $("#share").click(function() {
+  var sharePopoverVisible = false;
+  $("#share").click(function(e) {
     var code = editor.getValue();
     $.post("save.php", {"code": editor.getValue()})
     .done(function(res) {
       var url = location.protocol+'//'+location.host+location.pathname+"#"+res;
-      $("#output").prepend("<p>Share this url: <input value=\""+url+"\"></p>");
-      showOutputPane();
+      $("#share").popover({
+        title: "Share this URL",
+        content: "<input value=\""+url+"\" type=text size=40>",
+        placement: "bottom",
+        html: true,
+        trigger: "manual"
+      }).popover("show");
+      // Select input field in popover
+      $(".popover input").select();
+      // Prevent click event from bubbling up to document.
+      $(".popover").bind("click", function(e) { return false; });
+      sharePopoverVisible = true;
     });
+    return false;
+  });
+
+  $(document).click(function() {
+    if (sharePopoverVisible) {
+      $("#share").popover("destroy");
+    }
   });
 
   loadCode(location.hash);
