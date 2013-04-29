@@ -67,9 +67,9 @@ $(function(){
         session.addGutterDecoration(line, "errorGutter");
         prevErrors.push(line);
       }
-      $output.html($("<pre>").html(output).addClass("error"));
+      $output.html($("<pre>").text(output).addClass("error"));
     } else {
-      $output.html($("<pre>").html(output));
+      $output.html($("<pre>").text(output));
     }
   }
 
