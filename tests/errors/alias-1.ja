@@ -1,0 +1,11 @@
+procedure foo(int x, int y)
+    call bar(x, y)
+
+procedure bar(int a, int b)
+    skip
+
+procedure main()
+    int x
+
+    x += 5
+    call foo(x, x)

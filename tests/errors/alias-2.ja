@@ -1,0 +1,9 @@
+procedure foo(int a, int b)
+    skip
+
+procedure main()
+    int x
+    int y
+
+    call foo(x, x)
+    call foo(y, y)
