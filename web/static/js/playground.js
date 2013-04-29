@@ -5,6 +5,14 @@ $(function(){
   editor.getSession().setMode("ace/mode/janus");
   editor.getSession().setTabSize(4);
   editor.getSession().setUseSoftTabs(true);
+  editor.commands.addCommand({
+    name: 'runCommand',
+    bindKey: {win: 'Ctrl-Enter',  mac: 'Command-Enter'},
+    exec: function(editor) {
+        runCode();
+    },
+    readOnly: true // false if this command should not apply in readOnly mode
+  });
 
   var $editor = $("#editor");
   var $outputPane = $("#output-pane");
@@ -28,6 +36,29 @@ $(function(){
     if (match) {
       $.get("load.php", {hash: match[1]}).done(setEditorContent);
     }
+  }
+
+  function getOptions() {
+    var options = {
+      intSize: $("#options input[name='options-int-size']:checked").val()
+    };
+    return options;
+  }
+
+  function runCode() {
+    showOutputPane();
+    $executing.show();
+    $output.empty();
+
+    var code = editor.getValue();
+    var options = getOptions();
+    $.post("execute.php", {
+      "code": code,
+      "intsize": options["intSize"]
+    })
+    .done(formatOutput)
+    .fail(formatError)
+    .always(function() { $executing.hide(); })
   }
 
   var prevErrors = [];
@@ -88,20 +119,7 @@ $(function(){
     loadCode(e.target.hash);
   });
 
-  $("#run").click(function() {
-    showOutputPane();
-    $executing.show();
-    $output.empty();
-    var code = editor.getValue();
-    var intSize = $("#options input[name='options-int-size']:checked").val();
-    $.post("execute.php", {
-      "code": code,
-      "intsize": intSize
-    })
-    .done(formatOutput)
-    .fail(formatError)
-    .always(function() { $executing.hide(); })
-  });
+  $("#run").click(runCode);
 
   $("#output-pane button.close").click(function() {
     $("#output-pane").hide();
