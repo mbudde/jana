@@ -1,10 +1,12 @@
 <?php
 
-
-$prog_text = $_POST["code"];
+$prog_text = filter_input(INPUT_POST, "code", FILTER_UNSAFE_RAW);
 $jana_flags = array("-t30");
 
-if (isset($_POST["intsize"]) && $_POST["intsize"] === "32") {
+$intsize = filter_input(INPUT_POST, "intsize", FILTER_VALIDATE_REGEXP, array(
+  "options" => array("regexp" => "/^(arbitrary|32)$/")
+));
+if ($intsize === "32") {
   array_push($jana_flags, "-m");
 }
 

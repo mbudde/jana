@@ -1,8 +1,10 @@
 <?php
 
-$hash = $_GET["hash"];
+$hash = filter_input(INPUT_GET, "hash", FILTER_VALIDATE_REGEXP, array(
+  "options" => array("regexp" => "/^[a-z0-9]{8}$/")
+));
 
-if (!isset($hash) || !preg_match('/^[a-z0-9]{8}$/', $hash)) {
+if (!$hash) {
     header("HTTP/1.1 400 Bad Request");
     echo "bad hash";
     exit;
