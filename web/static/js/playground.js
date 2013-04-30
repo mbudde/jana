@@ -117,7 +117,7 @@ $(function(){
   }
 
   function formatError(data) {
-    $output.append(
+    $output.html(
       '<div class="alert alert-error">An error occured while trying to run the program.</div>'
     );
   }
