@@ -45,10 +45,10 @@ $(function(){
     return options;
   }
 
+  var spinnerTimeout;
   function runCode() {
     showOutputPane();
-    $executing.show();
-    $output.empty();
+    spinnerTimeout = window.setTimeout(function() { $executing.fadeIn(); }, 1000);
 
     var code = editor.getValue();
     var options = getOptions();
@@ -58,7 +58,10 @@ $(function(){
     })
     .done(formatOutput)
     .fail(formatError)
-    .always(function() { $executing.hide(); })
+    .always(function() {
+      window.clearTimeout(spinnerTimeout);
+      $executing.fadeOut();
+    });
   }
 
   var prevErrors = [];
