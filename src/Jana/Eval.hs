@@ -7,6 +7,7 @@ module Jana.Eval (
 
 
 import Prelude hiding (GT, LT, EQ, userError)
+import System.Exit
 import Data.Char (toLower)
 import Data.Map (fromList)
 import Data.List (genericSplitAt, genericReplicate)
@@ -120,7 +121,7 @@ runProgram _ (Program [main] procs) evalOptions =
     Right procEnv ->
       case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
         Right (_, s) -> putStrLn $ showStore s
-        Left err     -> print err
+        Left err     -> print err >> (exitWith $ ExitFailure 1)
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
 runProgram filename (Program _ _) _ =

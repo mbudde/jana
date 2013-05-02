@@ -1,0 +1,57 @@
+#editor {
+    position: absolute;
+    font-size: 15px;
+    top: 40px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+#output-pane {
+    position: absolute;
+    font-size: 15px;
+    height: 0px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-top: 1px solid #ccc;
+    background-color: #eee;
+    overflow: auto;
+    box-shadow: inset 0px 1px 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+#output-pane .output-container {
+    margin: 8px;
+}
+
+#output-pane button.close {
+    margin-right: 5px;
+}
+
+#output-pane .executing {
+    display: none;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+#output pre.error {
+    color: #b94a48;
+    background-color: #f2dede;
+    border-color: #eed3d7;
+}
+
+.popover input {
+    margin-top: 10px;
+}
+
+.navbar li button {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.errorGutter {
+    background-color: #ffcccc;
+    color: #cc0000;
+}
