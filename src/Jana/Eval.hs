@@ -120,16 +120,18 @@ printfRender str vList@((var, varType):vars) =
   case percentIndex of
     Just idx | typeStr `elem` acceptedTypes ->
                  if typeStr == varType
-                   then printfRender (init str ++ [insertVar var (take (idx + 2) lastStr), drop (idx + 2) lastStr]) vars
+                   then printfRender (init str ++ [insertVar var cutFirstStr, cutLastStr]) vars
                    else Left $ printfTypeMismatch typeStr varType
              | typeChar == '%' ->
-                 printfRender (init str ++ [delete '%' (take (idx + 2) lastStr), drop (idx + 2) lastStr]) vList
+                 printfRender (init str ++ [delete '%' cutFirstStr, cutLastStr]) vList
              | otherwise -> Left $ printfUnrecognizedType typeChar
 
       where lastStr = last str
             typeChar = last str !! (idx+1)      
-            acceptedTypes = ["int", "array", "bool"]
+            acceptedTypes = ["int", "array", "bool", "stack"]
             typeStr = correspondingType typeChar
+            cutFirstStr = take (idx + 2) lastStr
+            cutLastStr = drop (idx + 2) lastStr
             
     Nothing  -> if null vList
                   then Right $ concat str                  
@@ -145,6 +147,7 @@ correspondingType typeChar =
     'd' -> "int"
     'a' -> "array"
     'b' -> "bool"
+    't' -> "stack"
     _   -> ""
 
 
