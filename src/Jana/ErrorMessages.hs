@@ -115,11 +115,20 @@ procDuplicateArgs id = Message $
 userError :: String -> Message
 userError msg = Message $ "User error: " ++ msg
 
-printfTypeMismatch :: String -> String -> Message
-printfTypeMismatch expected given = Message $ printf "Type mismatch in printf statement: Expected %s, given %s" expected given
+printfTypeMismatch :: Char -> String -> String -> Message
+printfTypeMismatch char expected given = Message $
+  printf "Type mismatch for `%%%c' format specifier\n\
+         \Expected argument of type `%s'\n\
+         \      but actual type was `%s'" char expected given
 
-printfArgMismatch :: Message
-printfArgMismatch = Message "Number of arguments does not correspond with number of %<type char>"
+printfTooManyArgs :: Message
+printfTooManyArgs = Message $
+  "Not all arguments where used during string formatting"
+
+printfNotEnoughArgs :: Message
+printfNotEnoughArgs = Message $
+  "Not enough arguments for format string"
 
 printfUnrecognizedType :: Char -> Message
-printfUnrecognizedType char = Message $ printf "Unrecognized type character: %c" char
+printfUnrecognizedType char = Message $
+  printf "Unrecognized format specifier: `%%%c'" char

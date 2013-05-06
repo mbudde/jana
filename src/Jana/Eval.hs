@@ -114,14 +114,14 @@ getExprPos (Nil pos)       = pos
 printfRender :: [String] -> [(String, String)] -> Either Message String
 printfRender str [] =
   case findPercent (last str) of
-    Just _ -> Left printfArgMismatch
+    Just _  -> Left printfNotEnoughArgs
     Nothing -> Right $ concat str
 printfRender str vList@((var, varType):vars) =
   case percentIndex of
     Just idx | typeStr `elem` acceptedTypes ->
                  if typeStr == varType
                    then printfRender (init str ++ [insertVar var cutFirstStr, cutLastStr]) vars
-                   else Left $ printfTypeMismatch typeStr varType
+                   else Left $ printfTypeMismatch typeChar typeStr varType
              | typeChar == '%' ->
                  printfRender (init str ++ [delete '%' cutFirstStr, cutLastStr]) vList
              | otherwise -> Left $ printfUnrecognizedType typeChar
@@ -135,7 +135,7 @@ printfRender str vList@((var, varType):vars) =
             
     Nothing  -> if null vList
                   then Right $ concat str                  
-                  else Left printfArgMismatch
+                  else Left printfTooManyArgs
   where percentIndex = findPercent (last str)
         insertVar :: String -> String -> String
         insertVar var str =
