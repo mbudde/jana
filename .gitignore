@@ -5,3 +5,5 @@ web/programs
 *.hi
 *.o
 *.egg-info
+web/examples
+jana32
