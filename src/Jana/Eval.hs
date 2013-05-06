@@ -8,13 +8,11 @@ module Jana.Eval (
 
 import Prelude hiding (GT, LT, EQ, userError)
 import Data.Char (toLower)
-import Data.Map (fromList)
 import Data.List (genericSplitAt, genericReplicate)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
 import Control.Monad.Reader
-import Text.Printf (printf)
 
 import Text.Parsec.Pos
 
@@ -24,6 +22,7 @@ import Jana.Invert
 import Jana.Error
 import Jana.ErrorMessages
 import Jana.Parser (parseExprString, parseStmtsString)
+import Jana.Printf
 
 inArgument :: String -> String -> Eval a -> Eval a
 inArgument funid argid monad = catchError monad $
@@ -118,9 +117,12 @@ runProgram _ (Program [main] procs) evalOptions =
   case procEnvFromList procs of
     Left err -> print err
     Right procEnv ->
-      case runEval (evalMain main) emptyStore EE { procEnv = procEnv, evalOptions = evalOptions } of
-        Right (_, s) -> putStrLn $ showStore s
-        Left err     -> print err
+      let env = EE { procEnv = procEnv
+                   , evalOptions = evalOptions }
+      in do runRes <- runEval (evalMain main) emptyStore env
+            case runRes of
+              Right (_, s) -> putStrLn $ showStore s
+              Left err     -> print err
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
 runProgram filename (Program _ _) _ =
@@ -248,6 +250,30 @@ evalStmt (Swap id1 id2 pos) =
        else pos <!!> swapTypeError (showValueType val1) (showValueType val2)
 evalStmt (UserError msg pos) =
   pos <!!> userError msg
+
+evalStmt (Prints (Print msg) pos) =
+  liftIO $ putStrLn msg
+
+evalStmt (Prints (Printf msg []) pos) = evalStmt $ Prints (Print msg) pos
+evalStmt (Prints (Printf msg vars) pos) =
+  do varList' <- varList
+     case printfRender [msg] varList' of
+       Right str -> liftIO $ putStrLn str
+       Left  err -> pos <!!> err
+  where varList =
+          mapM makeVarPair vars
+        makeVarPair var =
+          do val <- getVar var
+             return (show val, showValueType val)
+
+evalStmt (Prints (Show vars) pos) =
+  do str <- mapM showVar vars
+     liftIO $ putStrLn $ showVars str
+  where showVar var =
+          do val <- getVar var
+             return $ show var ++ " = " ++ show val
+        showVars (var:[])   = var
+        showVars (var:vars) = var ++ ", " ++ showVars vars
 
 evalStmt (Skip _) = return ()
 

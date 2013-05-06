@@ -135,6 +135,18 @@ formatStmt (Swap id1 id2 _) =
 formatStmt (UserError msg _) =
   text "error" <> parens (text (show msg))
 
+formatStmt (Prints (Print str) _) =
+  text "print" <> parens (text (show str))
+
+formatStmt (Prints (Printf str []) _) =
+  text "printf" <> parens (text (show str))
+
+formatStmt (Prints (Printf str idents) _) =
+  text "printf" <> parens (text (show str) <> comma <+> commasep (map formatIdent idents))
+
+formatStmt (Prints (Show idents) _) =
+  text "show" <> parens (commasep $ map formatIdent idents)
+
 formatStmt (Skip _) =
   text "skip"
 

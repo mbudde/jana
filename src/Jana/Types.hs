@@ -48,6 +48,7 @@ showValueType :: Value -> String
 showValueType (JInt _) = "int"
 showValueType (JStack _) = "stack"
 showValueType (JArray _) = "array"
+showValueType (JBool _)  = "bool"
 
 typesMatch :: Value -> Value -> Bool
 typesMatch (JInt _) (JInt _) = True
@@ -186,11 +187,11 @@ getProc (Ident funName pos) =      -- FIXME: calling main?
 -- Evaluation
 --
 
-newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (Either JanaError)) a }
-               deriving (Monad, MonadError JanaError, MonadReader EvalEnv, MonadState Store)
+newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (ErrorT JanaError IO)) a }
+               deriving (Monad, MonadIO, MonadError JanaError, MonadReader EvalEnv, MonadState Store)
 
-runEval :: Eval a -> Store -> EvalEnv -> Either JanaError (a, Store)
-runEval eval store procs = runReaderT (runStateT (runE eval) store) procs
+runEval :: Eval a -> Store -> EvalEnv -> IO (Either JanaError (a, Store))
+runEval eval store procs = runErrorT (runReaderT (runStateT (runE eval) store) procs)
 
 -- XXX: Implement monad instances manually?
 {- instance Monad Eval Store where -}

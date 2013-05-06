@@ -31,5 +31,6 @@ invertStmt (Call funId args pos) =
 invertStmt (Uncall funId args pos) =
   Call funId args pos
 invertStmt stmt@(Swap{}) = stmt
+invertStmt stmt@(Prints{}) = stmt
 invertStmt (Skip pos) = Skip pos
 

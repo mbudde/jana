@@ -64,6 +64,9 @@ janaDef = Token.LanguageDef {
                                          , "empty"
                                          , "top"
                                          , "size"
+                                         , "show"
+                                         , "print"
+                                         , "printf"
                                          , "nil"
                                          ]
               , Token.caseSensitive    = True
@@ -142,6 +145,7 @@ statement =   assignStmt
           <|> uncallStmt
           <|> swapStmt
           <|> errorStmt
+          <|> printsStmt
           <|> skipStmt
           <?> "statement"
 
@@ -162,8 +166,8 @@ modOp =   (reservedOp "+=" >> return AddEq)
 
 ifStmt :: Parser Stmt
 ifStmt =
-  do reserved "if"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "if"
      entrycond <- expression
      reserved "then"
      stats1    <- many1 statement
@@ -174,8 +178,8 @@ ifStmt =
 
 fromStmt :: Parser Stmt
 fromStmt =
-  do reserved "from"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "from"
      entrycond <- expression
      stats1    <- option [] $ reserved "do"   >> many1 statement
      stats2    <- option [] $ reserved "loop" >> many1 statement
@@ -185,15 +189,15 @@ fromStmt =
 
 pushStmt :: Parser Stmt
 pushStmt =
-  do reserved "push"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "push"
      (x,y) <- parens twoArgs
      return $ Push x y pos
 
 popStmt :: Parser Stmt
 popStmt =
-  do reserved "pop"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "pop"
      (x,y) <- parens twoArgs
      return $ Pop x y pos
 
@@ -207,8 +211,8 @@ twoArgs =
 
 localStmt :: Parser Stmt
 localStmt =
-  do reserved "local"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "local"
      type1  <- atype
      ident1 <- identifier
      reservedOp "="
@@ -227,16 +231,16 @@ atype =   (reserved "int"   >> liftM Int getPosition)
 
 callStmt :: Parser Stmt
 callStmt =
-  do reserved "call"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "call"
      procname <- identifier
      args     <- parens $ sepBy identifier comma
      return $ Call procname args pos
 
 uncallStmt :: Parser Stmt
 uncallStmt =
-  do reserved "uncall"
-     pos   <- getPosition
+  do pos   <- getPosition
+     reserved "uncall"
      procname <- identifier
      args     <- parens $ sepBy identifier comma
      return $ Uncall procname args pos
@@ -256,6 +260,31 @@ errorStmt =
   do pos <- getPosition
      reserved "error"
      liftM (flip UserError pos) (parens stringLit)
+
+printsStmt :: Parser Stmt
+printsStmt =   liftM2 (flip Prints) getPosition printStmt
+           <|> liftM2 (flip Prints) getPosition printfStmt
+           <|> liftM2 (flip Prints) getPosition showStmt
+
+printStmt :: Parser Prints
+printStmt =
+  do reserved "print"
+     str <- parens stringLit
+     return $ Print str
+
+printfStmt :: Parser Prints
+printfStmt =
+  do reserved "printf"
+     (a, b) <- parens $ do str <- stringLit
+                           identList <- option [] $ comma >> sepBy1 identifier comma
+                           return (str, identList)
+     return $ Printf a b
+
+showStmt :: Parser Prints
+showStmt =
+  do reserved "show"
+     identList <- parens $ sepBy1 identifier comma
+     return $ Show identList
 
 skipStmt :: Parser Stmt
 skipStmt = reserved "skip" >> liftM Skip getPosition

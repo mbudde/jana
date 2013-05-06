@@ -79,8 +79,7 @@ procDefined id = Message $
   printf "Procedure `%s' is already defined" (ident id)
 
 callingMainError :: Message
-callingMainError = Message $
-  "It is not allowed to call the `main' procedure"
+callingMainError = Message "It is not allowed to call the `main' procedure"
 
 argumentError :: (Identifiable a, PrintfArg b) => a -> b -> b -> Message
 argumentError id expect actual = Message $
@@ -116,3 +115,20 @@ procDuplicateArgs id = Message $
 userError :: String -> Message
 userError msg = Message $ "User error: " ++ msg
 
+printfTypeMismatch :: Char -> String -> String -> Message
+printfTypeMismatch char expected given = Message $
+  printf "Type mismatch for `%%%c' format specifier\n\
+         \Expected argument of type `%s'\n\
+         \      but actual type was `%s'" char expected given
+
+printfTooManyArgs :: Message
+printfTooManyArgs = Message $
+  "Not all arguments where used during string formatting"
+
+printfNotEnoughArgs :: Message
+printfNotEnoughArgs = Message $
+  "Not enough arguments for format string"
+
+printfUnrecognizedType :: Char -> Message
+printfUnrecognizedType char = Message $
+  printf "Unrecognized format specifier: `%%%c'" char
