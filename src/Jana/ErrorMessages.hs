@@ -7,6 +7,9 @@ import Jana.Error
 import Jana.Ast
 
 
+aliasError :: Ident -> Ident -> Message
+aliasError id1 id2 = Message $
+  printf "Identifiers `%s' and `%s' are aliases" (ident id1) (ident id2)
 
 unboundVar :: String -> Message
 unboundVar name = Message $

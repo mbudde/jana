@@ -1,9 +1,10 @@
-procedure foo(int a, int b)
-    skip
+procedure foo(int x[], int y[])
+    call bar(x, y)
+
+procedure bar(int a[], int b[])
+    a[1] += b[1]
 
 procedure main()
-    int x
-    int y
+    int x[3]
 
     call foo(x, x)
-    call foo(y, y)
