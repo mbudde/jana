@@ -281,10 +281,10 @@ evalModularAliasExpr :: Lval -> Expr -> Eval Value
 evalModularAliasExpr lv expr = evalExpr (Just lv) expr >>= numberToModular
 
 findAlias :: Ident -> Ident -> Eval ()
-findAlias id1 id2 =
+findAlias id1 id2@(Ident _ pos) =
   do aliasSet <- asks aliases
      when (isAlias aliasSet (ident id1) (ident id2)) $
-       (newPos "" 0 0) <!!> aliasError
+       pos <!!> aliasError id1 id2
 
 checkAlias :: Maybe Lval -> Ident -> Eval ()
 checkAlias Nothing _ = return ()
