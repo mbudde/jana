@@ -151,8 +151,8 @@ statement =   assignStmt
 
 assignStmt :: Parser Stmt
 assignStmt =
-  do assign <-
-       do lv    <- try lval
+  do assign <- try $
+       do lv    <- lval
           pos   <- getPosition
           modop <- modOp
           return $ flip (Assign modop lv) pos
