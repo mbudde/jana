@@ -9,7 +9,7 @@ $(function(){
     name: 'runCommand',
     bindKey: {win: 'Ctrl-Enter',  mac: 'Command-Enter'},
     exec: function(editor) {
-        runCode();
+        execute();
     },
     readOnly: true // false if this command should not apply in readOnly mode
   });
@@ -46,15 +46,25 @@ $(function(){
   }
 
   var spinnerTimeout;
-  function runCode() {
-    showOutputPane();
+  function execute(options) {
+    defaults = {
+      "outputHeight": 200,
+      "invert": false
+    }
+    if (typeof options == "object") {
+      options = $.extend(defaults, options);
+    } else {
+      options = defaults;
+    }
+    showOutputPane(options.outputHeight);
     spinnerTimeout = window.setTimeout(function() { $executing.fadeIn(); }, 1000);
 
     var code = editor.getValue();
-    var options = getOptions();
+    var janaOptions = getOptions();
     $.post("execute.php", {
       "code": code,
-      "intsize": options["intSize"]
+      "intsize": janaOptions["intSize"],
+      "invert": options.invert ? "on" : "off"
     })
     .done(formatOutput)
     .fail(formatError)
@@ -73,9 +83,10 @@ $(function(){
     }
   }
 
-  function showOutputPane() {
+  function showOutputPane(newHeight) {
+    newHeight = newHeight || 160;
     $outputPane.animate({
-      height: 160
+      height: newHeight
     }, {
       duration: 200,
       done: function() {
@@ -126,7 +137,11 @@ $(function(){
     loadCode(e.target.hash);
   });
 
-  $("#run").click(runCode);
+  $("#run").click(execute);
+
+  $("#invert").click(function() {
+    execute({outputHeight: 400, invert: true});
+  });
 
   $("#output-pane button.close").click(hideOutputPane);
 

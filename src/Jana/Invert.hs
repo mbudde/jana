@@ -2,6 +2,9 @@ module Jana.Invert where
 
 import Jana.Ast
 
+invertProgram :: Program -> Program
+invertProgram (Program mains procs) =
+  Program (map invertMain mains) (map invertProc procs)
 
 invertMain :: ProcMain -> ProcMain
 invertMain (ProcMain vdecls body pos) = ProcMain vdecls (invertStmts body) pos
