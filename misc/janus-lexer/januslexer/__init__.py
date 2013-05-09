@@ -14,7 +14,6 @@ class JanusLexer(RegexLexer):
     keywords = [
         'if', 'then', 'else', 'fi',
         'from', 'do', 'loop', 'until',
-        'push', 'pop',
         'local', 'delocal',
         'skip'
     ]
@@ -22,7 +21,8 @@ class JanusLexer(RegexLexer):
     operators = r'(\+=?|-=?|\^=?|\*|/|&&?|\|\|?|<=?|>=?|!?=)'
 
     builtin = [
-        'top', 'empty'
+        'push', 'pop', 'show', 'print', 'printf', 'error',
+        'top', 'empty', 'size'
     ]
 
     identifier = '[a-zA-Z][a-zA-Z0-9]*'
@@ -45,7 +45,7 @@ class JanusLexer(RegexLexer):
             (r'\b(%s)\b' % '|'.join(keywords), Keyword),
             (r'\b(%s)\b' % '|'.join(builtin), Name.Builtin),
             (r'\b(int|stack)\b', Keyword.Type),
-            (r'\b(nil)\b', Name.Constant),
+            (r'\b(nil|true|false)\b', Name.Constant),
             (operators, Operator),
             (identifier, Name.Variable),
             (r'"', String, 'string'),

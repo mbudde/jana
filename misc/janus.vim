@@ -8,12 +8,13 @@ if exists("b:current_syntax")
   finish
 endif
 
-syn keyword janusKeyword swap local delocal push pop nil error
+syn keyword janusKeyword local delocal true false nil skip
 syn keyword janusKeyword call uncall
+syn keyword janusKeyword push pop error show print printf
 syn keyword janusStatement procedure nextgroup=janusProcedure skipwhite
 syn keyword janusConditional if then else fi
 syn keyword janusRepeat from do loop until
-syn keyword janusOperator empty top
+syn keyword janusOperator empty top size
 
 syn keyword janusType int stack
 
