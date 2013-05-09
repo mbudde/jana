@@ -18,14 +18,14 @@ class JanusLexer(RegexLexer):
         'skip'
     ]
 
-    operators = r'(\+=?|-=?|\^=?|\*|/|&&?|\|\|?|<=?|>=?|!?=)'
+    operators = r'(!|%|&|\||\*|/|\-|\+|=|!=|<=|>=|<=>|<|>|&&|\|\||\+=|\-=|\^=)'
 
     builtin = [
         'push', 'pop', 'show', 'print', 'printf', 'error',
         'top', 'empty', 'size'
     ]
 
-    identifier = '[a-zA-Z][a-zA-Z0-9]*'
+    identifier = '[a-zA-Z][a-zA-Z0-9_]*'
     ascii = ['NUL','SOH','[SE]TX','EOT','ENQ','ACK',
              'BEL','BS','HT','LF','VT','FF','CR','S[OI]','DLE',
              'DC[1-4]','NAK','SYN','ETB','CAN',
@@ -62,7 +62,7 @@ class JanusLexer(RegexLexer):
             (r'[+-]?\d+', Number.Integer),
         ],
         'comment': [
-            (r'[^/*)]', Comment.Multiline),
+            (r'[^/*]', Comment.Multiline),
             (r'\/\*', Comment.Multiline, '#push'),
             (r'\*\/', Comment.Multiline, '#pop'),
             (r'[/*]', Comment.Multiline),
