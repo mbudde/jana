@@ -6,7 +6,7 @@ procedure main()
   a += 10
 
   if (a > 0) then
-    error "Program has been run without modular flag"
+    error("Program has been run without modular flag")
   else
-    error "Program has been run with modular flag"
+    error("Program has been run with modular flag")
   fi 1
