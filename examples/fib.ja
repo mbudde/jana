@@ -1,6 +1,8 @@
+// Fibonacci example
+// Calculates a fibonacci pair using recursion
 
 procedure fib(int x1, int x2, int n)
-    if n=0 then
+    if n = 0 then
         x1 += 1
         x2 += 1
     else
