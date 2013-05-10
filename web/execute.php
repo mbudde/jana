@@ -19,7 +19,7 @@ if ($invert === TRUE) {
 array_push($jana_flags, "-");
 
 $dir = dirname(__FILE__);
-$cmd = "$dir/../jana " . implode(" ", $jana_flags);
+$cmd = "$dir/jana " . implode(" ", $jana_flags);
 
 $cwd = "/tmp";
 $descriptorspec = array(
