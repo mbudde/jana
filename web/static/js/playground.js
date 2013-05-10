@@ -173,9 +173,10 @@ $(function(){
     }
   });
 
-  window.onbeforeunload = function() {
+  $(window).on("hashchange", function() { loadCode(location.hash); });
+  $(window).on("beforeunload", function() {
     return "All your changes will be lost when you leave the site.";
-  };
+  });
 
   loadCode(location.hash);
 });
