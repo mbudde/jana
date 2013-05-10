@@ -357,8 +357,8 @@ evalExpr lv expr@(Empty id pos) = inArgument "empty" (ident id) $
   do checkAlias lv id
      stack <- unpackStack pos =<< getVar id
      case stack of
-       [] -> return $ JInt 1
-       _  -> return $ JInt 0
+       [] -> return $ JBool True
+       _  -> return $ JBool False
 evalExpr _ expr@(Size id@(Ident _ pos) _) = inArgument "size" (ident id) $
   do boxedVal <- getVar id
      case boxedVal of
