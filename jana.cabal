@@ -32,3 +32,4 @@ executable jana
                      containers >= 0.4.2.1,
                      mtl >= 2.1.2,
                      pretty == 1.*
+  ghc-options:       -static -optc-static -optl-static -optl-pthread
