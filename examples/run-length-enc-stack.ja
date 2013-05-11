@@ -1,0 +1,40 @@
+// Run-length encoding using stacks
+
+procedure encode(stack text, stack arc)
+    from !empty(text) && empty(arc) do
+        local int val = 0
+        local int n = 0
+        val += top(text)
+        from n = 0 do
+            local int tmp = 0
+            pop(tmp, text)
+            delocal int tmp = val
+            n += 1
+        until empty(text) || top(text) != val
+        push(val, arc)
+        push(n, arc)
+        delocal int n = 0
+        delocal int val = 0
+    until empty(text)
+
+procedure main()
+    stack text  // uncompressed text
+    stack arc   // compressed text as (n, char) pairs in reverse order
+
+    local int x = 0
+    x += 12
+    push(x, text)
+    x += 53
+    push(x, text)
+    x += 53
+    push(x, text)
+    x += 53
+    push(x, text)
+    x += 32
+    push(x, text)
+    x += 32
+    push(x, text)
+    delocal int x = 0
+
+    show(text)
+    call encode(text, arc)

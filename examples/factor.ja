@@ -25,7 +25,6 @@ procedure factor(int num, int fact[])
 
     if num != 1 then
         i += 1                                 // Put last prime away, if not done
-        // FIXME: change when lval-swap is implemented
         fact[i] ^= num                         // and zero num
         num     ^= fact[i]
         fact[i] ^= num
@@ -63,7 +62,7 @@ procedure main()
     num += 840
     call factor(num, fact)
 
-/*
+    /*
     fact[1] += 2
     fact[2] += 2
     fact[3] += 2
@@ -71,4 +70,4 @@ procedure main()
     fact[5] += 5
     fact[6] += 7
     uncall factor(num, fact)
-*/
+    */

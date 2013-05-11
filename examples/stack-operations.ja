@@ -1,0 +1,52 @@
+/* Various stack operations */
+
+/* Move n stack elements from one stack to another */
+procedure move_stack(stack src, stack dst, int n)
+    local int m = 0
+    from m = 0 loop
+        local int x = 0
+        pop(x, src)
+        push(x, dst)
+        delocal int x = 0
+        m += 1
+    until m = n
+    delocal int m = n
+
+/* Reverse the elements of a stack */
+procedure reverse(stack s)
+    if !empty(s) then
+        local int x = 0
+        local int n_move = size(s) - 1
+
+        pop(x, s)
+        call reverse(s)
+        // Place x at the bottom of the stack
+        // by moving all elements to a temporary stack
+        local stack ss = nil
+        call move_stack(s, ss, n_move)
+        push(x, s)
+        call move_stack(ss, s, n_move)
+        delocal stack ss = nil
+
+        delocal int n_move = size(s) - 1
+        delocal int x = 0
+    fi !empty(s)
+
+procedure main()
+    stack s
+
+    local int x = 0
+    x += 1
+    push(x, s)
+    x += 2
+    push(x, s)
+    x += 3
+    push(x, s)
+    x += 4
+    push(x, s)
+    x += 5
+    push(x, s)
+    delocal int x = 0
+
+    show(s)
+    call reverse(s)
