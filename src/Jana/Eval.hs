@@ -127,7 +127,7 @@ runProgram _ (Program [main] procs) evalOptions =
       in do runRes <- runEval (evalMain main) emptyStore env
             case runRes of
               Right (_, s) -> putStrLn $ showStore s
-              Left err     -> print err >> (exitWith $ ExitFailure 1)
+              Left err     -> print err >> exitWith (ExitFailure 1)
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
 runProgram filename (Program _ _) _ =
