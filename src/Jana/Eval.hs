@@ -9,7 +9,7 @@ module Jana.Eval (
 import Prelude hiding (GT, LT, EQ, userError)
 import System.Exit
 import Data.Char (toLower)
-import Data.List (genericSplitAt, genericReplicate)
+import Data.List (genericSplitAt, genericReplicate, intercalate)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
@@ -275,13 +275,9 @@ evalStmt (Prints (Printf msg vars) pos) =
              return (show val, showValueType val)
 
 evalStmt (Prints (Show vars) pos) =
-  do str <- mapM showVar vars
-     liftIO $ putStrLn $ showVars str
-  where showVar var =
-          do val <- getVar var
-             return $ show var ++ " = " ++ show val
-        showVars (var:[])   = var
-        showVars (var:vars) = var ++ ", " ++ showVars vars
+  do strs <- mapM showVar vars
+     liftIO $ putStrLn $ intercalate ", " strs
+  where showVar var = liftM (printVdecl (ident var)) (getVar var)
 
 evalStmt (Skip _) = return ()
 

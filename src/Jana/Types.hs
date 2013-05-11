@@ -4,7 +4,7 @@ module Jana.Types (
     Array, Stack,
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
-    Store, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
+    Store, printVdecl, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
     EvalEnv(..),
     EvalOptions(..), defaultOptions,
     ProcEnv, emptyProcEnv, procEnvFromList, getProc,
@@ -113,10 +113,12 @@ performModOperation modOp = performOperation $ modOpToBinOp modOp
 
 type Store = Map.Map String Value
 
+printVdecl :: String -> Value -> String
+printVdecl name val@(JArray xs) = printf "%s[%d] = %s" name (length xs) (show val)
+printVdecl name val = printf "%s = %s" name (show val)
+
 showStore :: Store -> String
-showStore store = intercalate "\n" (map printVdecl (Map.toList store))
-  where printVdecl (name, val@(JArray xs)) = printf "%s[%d] = %s" name (length xs) (show val)
-        printVdecl (name, val) = printf "%s = %s" name (show val)
+showStore store = intercalate "\n" (map (uncurry printVdecl) (Map.toList store))
 
 emptyStore = Map.empty
 
