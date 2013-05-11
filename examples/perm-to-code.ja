@@ -1,22 +1,26 @@
 // David Gries: The science of programming, 1987. pp.270
 
-procedure perm_to_code(int k, int j, int x[])
-    from k = 6 loop
+/* Permutation to code
+ * Given an array X that contains a permutation of the integers 0, 1, ...,
+ * size(X)-1, it computes the array X' where X'[i] is the number of X[j < i] that
+ * are smaller than X[i].
+ */
+procedure perm_to_code(int x[])
+    local int k = size(x)
+    from k = size(x) loop
         k -= 1
+        local int j = 0
         from j = 0 loop
             if x[j] > x[k] then
                 x[j] -= 1
             fi x[j] >= x[k]
             j += 1
         until j = k
-        j -= k
+        delocal int j = k
     until k = 0
+    delocal int k = 0
 
-// inputs:  2 0 3 1 5 4
-// outputs: 0 0 2 1 4 4
 procedure main()
-    int k
-    int j
     int x[6]
 
     x[0] += 2
@@ -25,5 +29,5 @@ procedure main()
     x[3] += 1
     x[4] += 5
     x[5] += 4
-    k += 6
-    call perm_to_code(k, j, x)
+    show(x)
+    call perm_to_code(x)
