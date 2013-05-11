@@ -108,9 +108,11 @@ getExprPos :: Expr -> SourcePos
 getExprPos (Number _ pos)  = pos
 getExprPos (Boolean _ pos) = pos
 getExprPos (LV _ pos)      = pos
+getExprPos (UnaryOp _ e)   = getExprPos e
 getExprPos (BinOp _ e1 _)  = getExprPos e1
 getExprPos (Empty _ pos)   = pos
 getExprPos (Top _ pos)     = pos
+getExprPos (Size _ pos)    = pos
 getExprPos (Nil pos)       = pos
 
 
