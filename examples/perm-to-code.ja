@@ -1,4 +1,4 @@
-// David Gries: The science of programming, 1987. pp.270
+/* Based on David Gries: The science of programming, 1987. pp.270 */
 
 /* Permutation to code
  * Given an array X that contains a permutation of the integers 0, 1, ...,

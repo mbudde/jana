@@ -1,11 +1,8 @@
-// Factorization program in the time reversible language Janus
-// C. Lutz and H. Derby.
-// Janus: a time-reversible language. A letter to Landauer.
-// Available at http://www.cise.ufl.edu/%7Empf/rc/janus.html,
-// 1982.
-
-// Operator names are different from the original program.
-// #, :, &,  ===> !=, <=>, &&, %
+/*
+ * Factorization program
+ * Adapted version of example from "Janus: a time-reversible language" by
+ * C. Lutz and H. Derby.
+ */
 
 
 // factor num into table in fact[]

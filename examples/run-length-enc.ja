@@ -1,4 +1,4 @@
-// run-length encoding
+// Run-length encoding
 
 procedure encode(int text[], int arc[])
     local int i = 0
