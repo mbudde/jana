@@ -22,7 +22,7 @@ procedure root(int num, int root)
 
 procedure doublebit(int bit)
     local int z = bit
-        bit += z
+    bit += z
     delocal int z = bit / 2
 
 procedure main()
