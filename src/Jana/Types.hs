@@ -180,7 +180,7 @@ checkDuplicateArgs (arg:args) =
   arg `notElem` args && checkDuplicateArgs args
 
 getProc :: Ident -> Eval Proc
-getProc (Ident funName pos) =      -- FIXME: calling main?
+getProc (Ident funName pos) =
   do when (funName == "main") $ pos <!!> callingMainError
      procEnv <- asks procEnv
      case Map.lookup funName procEnv of
@@ -198,12 +198,7 @@ newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (ErrorT JanaError IO)
 runEval :: Eval a -> Store -> EvalEnv -> IO (Either JanaError (a, Store))
 runEval eval store procs = runErrorT (runReaderT (runStateT (runE eval) store) procs)
 
--- XXX: Implement monad instances manually?
-{- instance Monad Eval Store where -}
-    {- return = E . return -}
-    {- e >>= f = S -}
-
-{- throwJanaError :: (MonadError e m) => SourcePos -> Message -> m a -}
+throwJanaError :: SourcePos -> Message -> Eval a
 throwJanaError pos msg = throwError $ newErrorMessage pos msg
 
 infixr 1 <!!>

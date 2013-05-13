@@ -195,7 +195,7 @@ evalStmts = mapM_ (\stmt -> inStatement stmt $ evalStmt stmt)
 evalStmt :: Stmt -> Eval ()
 evalStmt (Assign modOp lval expr pos) = assignLval modOp lval expr pos
 evalStmt (If e1 s1 s2 e2 _) =
-  do val1 <- unpackBool (getExprPos e1) =<< evalModularExpr e1 -- XXX: int required?
+  do val1 <- unpackBool (getExprPos e1) =<< evalModularExpr e1
      if val1
        then do evalStmts s1
                assertTrue e2
