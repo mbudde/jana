@@ -17,7 +17,7 @@ procedure factor(int num, int fact[])
             local int z = num / try
             z <=> num
             delocal int z = num * try
-	    until (num % try) != 0
+        until (num % try) != 0
     until (try * try) > num                    // Exit early if possible
 
     if num != 1 then
@@ -32,7 +32,7 @@ procedure factor(int num, int fact[])
     if (fact[i-1] * fact[i-1]) < fact[i] then  // Zero try
         from (try * try) > fact[i] loop
             uncall nexttry(try)
-	    until try = 0
+        until try = 0
     else
         try -= fact[i-1]
     fi (fact[i-1] * fact[i-1]) < fact[i]
