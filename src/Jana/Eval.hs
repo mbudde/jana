@@ -36,8 +36,8 @@ inExpression expr monad = catchError monad $
 
 inStatement :: Stmt -> Eval a -> Eval a
 inStatement stmt monad = catchError monad $
-  \err -> do store <- get
-             throwError $ addErrorMessage (InStatement stmt (showStore store)) err
+  \err -> do storeStr <- get >>= liftIO . showStore
+             throwError $ addErrorMessage (InStatement stmt storeStr) err
 
 inProcedure :: Proc -> Eval a -> Eval a
 inProcedure proc monad = catchError monad $
@@ -126,7 +126,7 @@ runProgram _ (Program [main] procs) evalOptions =
                    , aliases = Jana.Aliases.empty }
       in do runRes <- runEval (evalMain main) emptyStore env
             case runRes of
-              Right (_, s) -> putStrLn $ showStore s
+              Right (_, s) -> showStore s >>= putStrLn
               Left err     -> print err >> exitWith (ExitFailure 1)
 runProgram filename (Program [] _) _ =
   print $ newFileError filename noMainProc
@@ -147,30 +147,32 @@ evalMain proc@(ProcMain vdecls body pos) =
             else bindVar id $ initArr size
         initArr size = JArray $ genericReplicate size 0
 
+
 evalProc :: Proc -> [Ident] -> Eval ()
 evalProc proc args =
-  do values <- mapM getVar args
-     oldStoreEnv <- get
-     put emptyStore
-     bindArgs (params proc) values (procPos proc)
-     local (updateAliases (map ident args) (params proc)) (evalStmts $ body proc)
-     newValues <- mapM (getVar . getVdeclIdent) (params proc)
-     put oldStoreEnv
-     mapM_ (uncurry setVar) (zip args newValues)
-  where bindArg :: Vdecl -> Value -> Eval ()
-        bindArg vdecl val = inArgument (ident proc) (ident $ getVdeclIdent vdecl) $
-          checkVdecl vdecl val >> setVar (getVdeclIdent vdecl) val
-        bindArgs params values pos =
-          if expArgs /= gotArgs
-            then pos <!!> argumentError proc expArgs gotArgs
-            else mapM_ (uncurry bindArg) (zip params values)
-        expArgs = length (params proc)
-        gotArgs = length args
+  do checkNumArgs (length vdecls) (length args)
+     checkArgTypes
+     oldStore <- get
+     newStore <- localStore
+     put newStore
+     local updateAliases (evalStmts $ body proc)
+     put oldStore
+  where vdecls = params proc
+        refs = mapM getRef args
         procPos Proc { procname = Ident _ pos } = pos
+        checkNumArgs expArgs gotArgs =
+          when (expArgs /= gotArgs) $
+            procPos proc <!!> argumentError proc expArgs gotArgs
+        checkArg (vdecl, ref) = inArgument (ident proc) (ident $ getVdeclIdent vdecl) $
+          liftM (checkVdecl vdecl) (getRefValue ref)
+        checkArgTypes =
+          liftM (zip vdecls) refs >>= mapM_ checkArg
+        localStore =
+          liftM (storeFromList . zip (map (ident . getVdeclIdent) vdecls)) refs
         getVdeclIdent (Scalar _ id _) = id
         getVdeclIdent (Array id _ _)  = id
-        updateAliases args params env =
-          let xs = zip args (map ident params) in
+        updateAliases env =
+          let xs = zip (map ident args) (map ident vdecls) in
             env { aliases = mergeAliases xs (aliases env) }
 
 
@@ -277,7 +279,8 @@ evalStmt (Prints (Printf msg vars) pos) =
 evalStmt (Prints (Show vars) pos) =
   do strs <- mapM showVar vars
      liftIO $ putStrLn $ intercalate ", " strs
-  where showVar var = liftM (printVdecl (ident var)) (getVar var)
+  where showVar :: Ident -> Eval String
+        showVar var = liftM (printVdecl (ident var)) (getVar var)
 
 evalStmt (Skip _) = return ()
 

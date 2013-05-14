@@ -4,7 +4,8 @@ module Jana.Types (
     Array, Stack,
     Value(..), nil, performOperation, performModOperation,
     showValueType, typesMatch, truthy,
-    Store, printVdecl, showStore, emptyStore, bindVar, unbindVar, setVar, getVar,
+    Store, printVdecl, showStore, emptyStore, storeFromList,
+    getRef, getVar, getRefValue, bindVar, unbindVar, setVar,
     EvalEnv(..),
     EvalOptions(..), defaultOptions,
     ProcEnv, emptyProcEnv, procEnvFromList, getProc,
@@ -14,6 +15,7 @@ module Jana.Types (
 import Prelude hiding (GT, LT, EQ)
 import Data.Bits
 import Data.List (intercalate)
+import Data.IORef
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Error
@@ -111,41 +113,54 @@ performModOperation modOp = performOperation $ modOpToBinOp modOp
 -- Environment
 --
 
-type Store = Map.Map String Value
+type Store = Map.Map String (IORef Value)
 
 printVdecl :: String -> Value -> String
 printVdecl name val@(JArray xs) = printf "%s[%d] = %s" name (length xs) (show val)
 printVdecl name val = printf "%s = %s" name (show val)
 
-showStore :: Store -> String
-showStore store = intercalate "\n" (map (uncurry printVdecl) (Map.toList store))
+showStore :: Store -> IO String
+showStore store =
+  liftM (intercalate "\n")
+        (mapM (\(name, ref) -> liftM (printVdecl name) (readIORef ref))
+              (Map.toList store))
 
 emptyStore = Map.empty
 
-envFromList :: [(String, Value)] -> Store
-envFromList = Map.fromList
+storeFromList :: [(String, IORef Value)] -> Store
+storeFromList = Map.fromList
 
+getRef :: Ident -> Eval (IORef Value)
+getRef (Ident name pos) =
+  do storeEnv <- get
+     case Map.lookup name storeEnv of
+       Just ref -> return ref
+       Nothing  -> pos <!!> unboundVar name
+
+getVar :: Ident -> Eval Value
+getVar id = getRef id >>= liftIO . readIORef
+
+getRefValue :: IORef Value -> Eval Value
+getRefValue = liftIO . readIORef
+
+-- Bind a variable name to a new reference
 bindVar :: Ident -> Value -> Eval ()
 bindVar (Ident name pos) val =
   do storeEnv <- get
+     ref <- liftIO $ newIORef val
      case Map.lookup name storeEnv of
-       Nothing  -> put $ Map.insert name val storeEnv
-       Just _ -> pos <!!> alreadyBound name
+       Nothing  -> put $ Map.insert name ref storeEnv
+       Just _   -> pos <!!> alreadyBound name
 
 unbindVar :: Ident -> Eval ()
 unbindVar = modify . Map.delete . ident
 
-
+-- Set the value of a variable (modifying the reference)
 setVar :: Ident -> Value -> Eval ()
-setVar (Ident name _) val = modify $ Map.insert name val
+setVar id val =
+  do ref <- getRef id
+     liftIO $ writeIORef ref val
 
-
-getVar :: Ident -> Eval Value
-getVar (Ident name pos) =
-  do storeEnv <- get
-     case Map.lookup name storeEnv of
-       Just val -> return val
-       Nothing  -> pos <!!> unboundVar name
 
 data EvalEnv = EE { evalOptions :: EvalOptions
                   , procEnv :: ProcEnv
