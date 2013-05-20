@@ -12,6 +12,10 @@ build-type:          Simple
 cabal-version:       >= 1.8
 extra-source-files:  README.md
 
+flag static
+  description:       Build static binary
+  default:           False
+
 executable jana
   main-is:           Main.hs
   other-modules:     Jana.Aliases
@@ -30,4 +34,5 @@ executable jana
                      containers >= 0.4.2.1,
                      mtl >= 2.1.2,
                      pretty == 1.*
-  ghc-options:       -static -optc-static -optl-static -optl-pthread
+  if flag(static)
+    ghc-options:     -static -optc-static -optl-static -optl-pthread
