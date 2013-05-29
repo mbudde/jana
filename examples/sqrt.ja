@@ -1,5 +1,5 @@
 /*
- * Calculating a square root of an integer
+ * Calculating the square root of an integer.
  * Adapted version of example from "Janus: a time-reversible language" by
  * C. Lutz and H. Derby.
  */
