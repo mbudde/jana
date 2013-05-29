@@ -173,7 +173,7 @@ evalProc proc args =
         getVdeclIdent (Array id _ _)  = id
         updateAliases env =
           let xs = zip (map ident args) (map ident vdecls) in
-            env { aliases = mergeAliases xs (aliases env) }
+            env { aliases = introAndPropAliases xs (aliases env) }
 
 
 assignLval :: ModOp -> Lval -> Expr -> SourcePos -> Eval ()
