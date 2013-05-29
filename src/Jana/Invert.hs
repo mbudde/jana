@@ -4,10 +4,7 @@ import Jana.Ast
 
 invertProgram :: Program -> Program
 invertProgram (Program mains procs) =
-  Program (map invertMain mains) (map invertProc procs)
-
-invertMain :: ProcMain -> ProcMain
-invertMain (ProcMain vdecls body pos) = ProcMain vdecls (invertStmts body) pos
+  Program mains (map invertProc procs)
 
 invertProc :: Proc -> Proc
 invertProc proc = proc { body = invertStmts $ body proc }
