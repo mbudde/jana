@@ -183,7 +183,7 @@ assignLval modOp lv@(Var id) expr _ =
      performModOperation modOp varVal exprVal exprPos exprPos >>= setVar id
   where exprPos = getExprPos expr
 assignLval modOp (Lookup id idxExpr) expr pos =
-  do idx    <- unpackInt exprPos =<< evalModularExpr idxExpr
+  do idx    <- unpackInt exprPos =<< evalModularAliasExpr (Var id) idxExpr
      arr    <- unpackArray pos =<< getVar id
      val    <- evalModularAliasExpr (Lookup id (Number idx exprPos)) expr
      oldval <- arrayLookup arr idx (getExprPos idxExpr)

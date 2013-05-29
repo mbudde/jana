@@ -68,10 +68,12 @@ class JanusLexer(RegexLexer):
             (r'[/*]', Comment.Multiline),
         ],
         'escape-sequence': [
-            (r'\\[abfnrtv0\\\"\'\?]', String.Escape),
-            (r'\\x[0-9a-fA-F]{2}', String.Escape),
-            (r'\\u[0-9a-fA-F]{4}', String.Escape),
-            # Yes, \U literals are 6 hex digits.
-            (r'\\U[0-9a-fA-F]{6}', String.Escape)
+            (r'\\[abfnrtv0\\\"\'&]', String.Escape),
+            (r'\\[0-9]+', String.Escape),
+            (r'\\x[0-9a-fA-F]+', String.Escape),
+            (r'\\o[0-7]+', String.Escape),
+            (r'\\\^([A-Z]|@|\[|\\|\]|\^|_)', String.Escape),
+            (r'\\(%s)' % '|'.join(ascii), String.Escape),
+            (r'\\\s+\\', String.Escape)
         ]
     }
