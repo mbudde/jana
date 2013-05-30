@@ -1,7 +1,7 @@
 module Jana.Aliases (
   AliasSet,
   empty,
-  introduce, propagate, mergeAliases,
+  introduce, propagate, introAndPropAliases,
   isAlias
   ) where
 
@@ -33,9 +33,9 @@ propagate xs aliases = Set.foldr b empty aliases
                                             , x == x' && y == y' ]
                       `Set.union` ys
 
-mergeAliases :: [(String, String)] -> AliasSet -> AliasSet
-mergeAliases xs aliases =
-  introduce xs `Set.union` propagate xs aliases
+introAndPropAliases :: [(String, String)] -> AliasSet -> AliasSet
+introAndPropAliases bindings aliases =
+  introduce bindings `Set.union` propagate bindings aliases
 
 
 isAlias :: AliasSet -> String -> String -> Bool

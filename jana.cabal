@@ -1,5 +1,5 @@
 name:                jana
-version:             0.9
+version:             1.0
 synopsis:            Janus interpreter
 description:         Interpreter for the reversible language Janus.
 license:             BSD3
