@@ -129,9 +129,9 @@ runProgram _ (Program [main] procs) evalOptions =
               Right (_, s) -> showStore s >>= putStrLn
               Left err     -> print err >> exitWith (ExitFailure 1)
 runProgram filename (Program [] _) _ =
-  print $ newFileError filename noMainProc
+  print (newFileError filename noMainProc) >> exitWith (ExitFailure 1)
 runProgram filename (Program _ _) _ =
-  print $ newFileError filename multipleMainProcs
+  print (newFileError filename multipleMainProcs) >> exitWith (ExitFailure 1)
 
 
 evalMain :: ProcMain -> Eval ()
