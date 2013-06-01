@@ -164,7 +164,7 @@ evalProc proc args =
           when (expArgs /= gotArgs) $
             procPos proc <!!> argumentError proc expArgs gotArgs
         checkArg (vdecl, ref) = inArgument (ident proc) (ident $ getVdeclIdent vdecl) $
-          liftM (checkVdecl vdecl) (getRefValue ref)
+          getRefValue ref >>= checkVdecl vdecl
         checkArgTypes =
           liftM (zip vdecls) refs >>= mapM_ checkArg
         localStore =
