@@ -27,7 +27,7 @@ instance Enum Message where
     fromEnum (InArgument  _ _) = 1
     fromEnum (InExpression  _) = 2
     fromEnum (InStatement _ _) = 3
-    fromEnum (InProcedure   _) = 4
+    fromEnum (InProcedure   _) = 3
     toEnum _ = error "toEnum is undefined for Message"
 
 instance Eq Message where

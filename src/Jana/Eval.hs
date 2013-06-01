@@ -149,7 +149,7 @@ evalMain proc@(ProcMain vdecls body pos) =
 
 
 evalProc :: Proc -> [Ident] -> Eval ()
-evalProc proc args =
+evalProc proc args = inProcedure proc $
   do checkNumArgs (length vdecls) (length args)
      checkArgTypes
      oldStore <- get
