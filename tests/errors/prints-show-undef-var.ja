@@ -6,4 +6,4 @@ procedure main()
   y += 13
   z += 21
 
-  show(x, y)
+  show(x, a)
