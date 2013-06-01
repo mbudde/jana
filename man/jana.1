@@ -4,16 +4,22 @@
 .SH NAME
 jana -- run programs written in Janus.
 .SH SYNOPSIS
-jana [\fB-m\fP] <file>
+jana [\fB\-m\fP] [\fB\-t\fP\fIN\fP] [\fB\-i\fP] <file>
 .SH DESCRIPTION
 Jana is an interpreter for Janus written in haskell. More information about the Janus language can be found in the article at http://dl.acm.org/citation.cfm?id=1244404.
 .SH OPTIONS
 The options are as follows:
 .TP
--m
-Use 32-bit modular integer values instead of infinite numbers.
+.BR \-m
+Use 32-bit modular integers instead of arbitrary size integers.
+.TP
+.BR \-t\fIN\fP
+Halt program after N seconds with exit code 124.
+.TP
+.BR \-i
+Print inverted program.
 .SH SEE ALSO
-http://topps.diku.dk/pirc/janus/intro.html
+http://topps.diku.dk/janus-playground
 .SH BUGS
 No known bugs.
 .SH AUTHORS

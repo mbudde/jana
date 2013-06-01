@@ -10,6 +10,7 @@ RSYNC_OPTS = \
 	--times            \
 	--exclude=Makefile \
 	--exclude=programs \
+	--exclude="*.swp"  \
 	--delete           \
 	--verbose
 
