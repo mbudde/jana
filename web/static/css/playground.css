@@ -46,6 +46,11 @@
     margin-top: 10px;
 }
 
+.navbar .container {
+    width: auto;
+    padding: 0 0 0 12px;
+}
+
 .navbar li button {
     margin-left: 10px;
     margin-right: 10px;
