@@ -18,7 +18,7 @@ import Data.List (intercalate)
 import Data.IORef
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad.Error
+import Control.Monad.Except
 import Text.Printf (printf)
 import qualified Data.Maybe as Maybe
 import qualified Data.Map as Map
@@ -207,11 +207,18 @@ getProc (Ident funName pos) =
 -- Evaluation
 --
 
-newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (ErrorT JanaError IO)) a }
+instance Functor Eval where
+    fmap  = liftM
+
+instance Applicative Eval where
+    pure  = return
+    (<*>) = ap  -- defined in Control.Monad
+
+newtype Eval a = E { runE :: StateT Store (ReaderT EvalEnv (ExceptT JanaError IO)) a }
                deriving (Monad, MonadIO, MonadError JanaError, MonadReader EvalEnv, MonadState Store)
 
 runEval :: Eval a -> Store -> EvalEnv -> IO (Either JanaError (a, Store))
-runEval eval store procs = runErrorT (runReaderT (runStateT (runE eval) store) procs)
+runEval eval store procs = runExceptT (runReaderT (runStateT (runE eval) store) procs)
 
 throwJanaError :: SourcePos -> Message -> Eval a
 throwJanaError pos msg = throwError $ newErrorMessage pos msg

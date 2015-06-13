@@ -1,6 +1,5 @@
 module Jana.ErrorMessages where
 
-import Control.Monad.Error
 import Text.Printf
 
 import Jana.Error

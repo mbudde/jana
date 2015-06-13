@@ -12,7 +12,7 @@ import Data.Char (toLower)
 import Data.List (genericSplitAt, genericReplicate, intercalate)
 import Control.Monad
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Reader
 
 import Text.Parsec.Pos
