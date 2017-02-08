@@ -16,6 +16,7 @@ import Prelude hiding (GT, LT, EQ)
 import Data.Bits
 import Data.List (intercalate)
 import Data.IORef
+import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Except
